@@ -17,7 +17,7 @@ typedef struct {
 
 int apple_x, apple_y;
 
-void apple()
+void apple(void)
 {
     srand(time(NULL));
     
@@ -30,7 +30,7 @@ int snake_y = 2;
 int snake_x = 2;
 vec snke_dir = { .x=1, .y=0 };
 
-void snake()
+void snake(void)
 {
     switch(getch())
     {
@@ -91,7 +91,7 @@ void render_score()
     mvprintw(0, 0, num);
 }
 
-int main()
+int main(void)
 {   
     initscr();
     raw();
