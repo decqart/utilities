@@ -8,7 +8,7 @@ int submax_y, submax_x;
 int mouse_y, mouse_x;
 long num = 0, numb = 0, d_answer = 0;
 int ch;
-int quit = 0;
+bool quit = false;
 char answer[100] = {0};
 
 void draw_keypad(void)
@@ -28,10 +28,10 @@ void draw_keypad(void)
 void calculate(void)
 {
     int symbol = strcspn(answer, "+-*/");
-    char numstr[20];
+    char numstr[100];
     char *numbstr;
     strncpy(numstr, answer, symbol);
-    num = atoi(numstr);
+    num = atol(numstr);
     
     switch (answer[symbol])
     {
@@ -66,24 +66,20 @@ void calculate(void)
     clear();
 }
 
-int mouse_input_box(int x1, int y1, int x2, int y2)
+void mouse_input_box(int x1, int y1, int x2, int y2, int _char)
 {
     if (x1 < mouse_x && mouse_x < x2 &&
         y1 < mouse_y && mouse_y < y2)
-        return 1;
-    return 0;
+        ch = _char;
 }
 
 void key_events(void)
 {
     ch = getch();
 
-    if (mouse_input_box(2, 3, 11, 6))
-    {
-        ch = 'c';
-    }
+    mouse_input_box(2, 3, 11, 6, 'c');
 
-    /* TODO: add button locations */
+    // TODO: add button locations
     
     switch (ch)
     {
@@ -142,11 +138,11 @@ void key_events(void)
         clear();
         break;
     case 'c':
-        /* CLEAR */
+        // CLEAR
         answer[0] = '\0';
         break;
     case 'q':
-        quit = 1;
+        quit = true;
         break;
     default:
         break;
@@ -171,7 +167,7 @@ int main(void)
     int height = max_y, width = max_x;
     initscr();
     raw();
-    curs_set(0);
+    curs_set(1);
     noecho();
     mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED, NULL);
     keypad(stdscr, 1);
@@ -182,6 +178,7 @@ int main(void)
         box(stdscr, ACS_VLINE, ACS_HLINE);
         mvprintw(1, max_x-strlen(answer)-1, answer);
         mvhline(2, 1, ACS_HLINE, max_x-2);
+        move(1, max_x-2);
         draw_keypad();
 
         key_events();
@@ -195,7 +192,6 @@ int main(void)
     }
 
     endwin();
-
     return 0;
 }
 
