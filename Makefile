@@ -1,6 +1,6 @@
 CC=cc
 
-CFLAGS=-g -Wall -std=c89
+CFLAGS=-g -Wall -std=c99
 LDFLAGS=-lcurses
 
 O=bin
