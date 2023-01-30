@@ -1,11 +1,11 @@
 CC=cc
 
-CFLAGS=-g -Wall -std=c99
+CFLAGS=-g -Wall -std=c99 -pedantic
 LDFLAGS=-lcurses
 
 O=bin
 
-default: snake calculator
+default: snake calculator bed
 
 clean:
 	rm -rf $(O)/*
@@ -17,4 +17,8 @@ snake: snake.c
 calculator: calculator.c
 	$(CC) $(CFLAGS) calculator.c \
 	-o $(O)/calc $(LDFLAGS)
+
+bed: bed.c
+	$(CC) $(CFLAGS) bed.c \
+	-o $(O)/bed $(LDFLAGS)
 
