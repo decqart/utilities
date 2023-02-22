@@ -23,7 +23,7 @@ void apple(void)
     if (change_apple)
     {
         srand(time(NULL));
-    
+
         apple_x = (rand() % (max_x-2)) + 1;
         apple_y = rand() % (max_y-1);
         change_apple = false;
@@ -46,7 +46,7 @@ void render_stuff(void)
         pos_count = 0;
 
     mvprintw(snake_y, snake_x, "O");
-    
+
     for (int i = 0; i < body_size; ++i)
     {
         mvprintw(body_pos[i].y, body_pos[i].x, "O");
@@ -108,7 +108,7 @@ void snake(void)
         }
         body_size++;
     }
-    
+
     if (snke_dir.y != 0)
         usleep(80000);
     usleep(100000);
@@ -118,7 +118,7 @@ void snake(void)
 }
 
 int main(void)
-{   
+{
     initscr();
     raw();
     curs_set(0);

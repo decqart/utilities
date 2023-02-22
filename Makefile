@@ -5,7 +5,7 @@ LDFLAGS=-lcurses
 
 O=bin
 
-default: snake calculator bed yes
+default: snake calculator bed whoami yes
 
 clean:
 	rm -rf $(O)/*
@@ -21,6 +21,10 @@ calculator: calculator.c
 bed: bed.c
 	$(CC) $(CFLAGS) bed.c \
 	-o $(O)/bed $(LDFLAGS)
+
+whoami: whoami.c
+	$(CC) $(CFLAGS) whoami.c \
+	-o $(O)/whoami
 
 yes: yes.c
 	$(CC) $(CFLAGS) yes.c \
