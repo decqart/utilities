@@ -6,7 +6,7 @@
 int main(int argc, char **argv)
 {
     char string[STR_SIZE] = "y";
-    if (argc > 0)
+    if (argc > 1)
         string[0] = '\0';
     size_t len = 0;
     for (int i = 1; i < argc; ++i)
