@@ -3,30 +3,69 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <curses.h>
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int max_x, max_y;
 
 WINDOW *left, *middle, *right;
 
-int pos = 0;
-int max_pos = 0;
+typedef struct {
+    int pos;
+    int end;
+} Pos;
+
+Pos cursor;
 
 bool quit = false;
 
-void nowrap_mvwprintw(WINDOW *win, int y, int x, char *str)
-{
-    if (str == NULL) return;
-    int width, height;
-    getmaxyx(win, height, width);
-    char *dstr = strndup(str, width-2);
-    char *end = &dstr[strlen(dstr)];
-    memset(end, ' ', width-2-strlen(dstr));
-    (void) height;
+char *selected/*file_name*/ = NULL;
+char *err = "None";
+int ierr = 0;
 
-    mvwprintw(win, y, x, dstr);
+void alphabetic_sort(char **array)
+{
+    char *tmp = NULL;
+    for (int i = 0; array[i]; i++)
+    {
+        for (int j = 0; array[j]; j++)
+        {
+            if (strcmp(array[i], array[j]) < 0)
+            {
+                tmp = array[i];
+                array[i] = array[j];
+                array[j] = tmp;
+            }
+        }
+    }
+}
+
+bool is_dir(char *path)
+{
+    struct stat statbuf;
+    if (stat(path, &statbuf))
+        return false;
+    return S_ISDIR(statbuf.st_mode);
+}
+
+void print_dir(WINDOW *win, int y, int x, char *str)
+{
+    size_t len = strlen(str);
+    int width = getmaxx(win)-2;
+    len = MIN(width, len);
+    char *dstr = malloc(width+1*sizeof(char));
+    strncpy(dstr, str, len);
+    char *end = &dstr[len];
+    //last bytes are filled with whitespace to take use of color
+    memset(end, ' ', width-len);
+    dstr[width] = '\0';
+
+    mvwaddstr(win, y, x, dstr);
     free(dstr);
+    ierr = width;
 }
 
 void create_windows(void)
@@ -41,7 +80,8 @@ void draw_borders(void)
     box(left, ACS_VLINE, ACS_HLINE);
     box(middle, ACS_VLINE, ACS_HLINE);
     box(right, ACS_VLINE, ACS_HLINE);
-    mvprintw(max_y-1, 0, "selected = %d-%d", pos, max_pos);
+    //mvprintw(max_y-1, 0, "selected = %d-%d", cursor.pos, cursor.end);
+    mvprintw(max_y-1, 0, "error = %s-%d", err, ierr);
     wrefresh(left);
     wrefresh(middle);
     wrefresh(right);
@@ -55,15 +95,18 @@ void read_dir(const char *dir_path, WINDOW *win)
     size_t count = 1;
     while (ent != NULL)
     {
-        if (pos == count-1)
+        if (cursor.pos == count-1)
+        {
             wattron(win, COLOR_PAIR(1));
-        nowrap_mvwprintw(win, count, 1, ent->d_name);
-        if (pos == count-1)
+            print_dir(win, count, 1, ent->d_name);
             wattroff(win, COLOR_PAIR(1));
+        }
+        else
+            print_dir(win, count, 1, ent->d_name);
         count++;
         ent = readdir(dir);
     }
-    max_pos = count-2;
+    cursor.end = count-2;
     closedir(dir);
 }
 
@@ -75,12 +118,12 @@ void input_events(void)
     switch(getch())
     {
     case KEY_UP:
-        if (pos != 0) pos--;
+        if (cursor.pos != 0) cursor.pos--;
         break;
     case KEY_LEFT:
         break;
     case KEY_DOWN:
-        if (pos != max_pos) pos++;
+        if (cursor.pos != cursor.end) cursor.pos++;
         break;
     case KEY_RIGHT:
         break;

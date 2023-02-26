@@ -1,6 +1,6 @@
 CC=cc
 
-CFLAGS=-g -Wall -std=c99 -pedantic
+CFLAGS=-g -Wall -std=c99 -pedantic -Os
 LDFLAGS=-lcurses
 
 O=bin
@@ -9,7 +9,7 @@ default:		\
 	clear		\
 	snake		\
 	calculator	\
-	filemanager	\
+	fm	\
 	bed			\
 	whoami		\
 	yes
@@ -25,7 +25,7 @@ calculator: calculator.c
 	$(CC) $(CFLAGS) calculator.c \
 	-o $(O)/calc $(LDFLAGS)
 
-filemanager: fm.c
+fm: fm.c
 	$(CC) $(CFLAGS) fm.c \
 	-o $(O)/fm $(LDFLAGS)
 
