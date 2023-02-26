@@ -9,6 +9,7 @@ default:		\
 	clear		\
 	snake		\
 	calculator	\
+	filemanager	\
 	bed			\
 	whoami		\
 	yes
@@ -23,6 +24,10 @@ snake: snake.c
 calculator: calculator.c
 	$(CC) $(CFLAGS) calculator.c \
 	-o $(O)/calc $(LDFLAGS)
+
+filemanager: fm.c
+	$(CC) $(CFLAGS) fm.c \
+	-o $(O)/fm $(LDFLAGS)
 
 bed: bed.c
 	$(CC) $(CFLAGS) bed.c \
