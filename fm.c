@@ -7,11 +7,15 @@
 #include <dirent.h>
 #include <curses.h>
 
+#include "StrArray.h"
+
+//void read_dir(const char *dir_path, WINDOW *win, StrArray str_array);
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int max_x, max_y;
 
-WINDOW *left, *middle, *right;
+WINDOW *left, *middle;
 
 typedef struct {
     int pos;
@@ -22,26 +26,11 @@ Pos cursor;
 
 bool quit = false;
 
+StrArray files;
+StrArray preview;
 char *selected/*file_name*/ = NULL;
 char *err = "None";
 int ierr = 0;
-
-void alphabetic_sort(char **array)
-{
-    char *tmp = NULL;
-    for (int i = 0; array[i]; i++)
-    {
-        for (int j = 0; array[j]; j++)
-        {
-            if (strcmp(array[i], array[j]) < 0)
-            {
-                tmp = array[i];
-                array[i] = array[j];
-                array[j] = tmp;
-            }
-        }
-    }
-}
 
 bool is_dir(char *path)
 {
@@ -51,40 +40,48 @@ bool is_dir(char *path)
     return S_ISDIR(statbuf.st_mode);
 }
 
-void print_dir(WINDOW *win, int y, int x, char *str)
+void print_dir(WINDOW *win, StrArray array)
 {
-    size_t len = strlen(str);
-    int width = getmaxx(win)-2;
-    len = MIN(width, len);
-    char *dstr = malloc(width+1*sizeof(char));
-    strncpy(dstr, str, len);
-    char *end = &dstr[len];
-    //last bytes are filled with whitespace to take use of color
-    memset(end, ' ', width-len);
-    dstr[width] = '\0';
+    int i;
+    for (i = 1; array.value[i] != NULL; ++i)
+    {
+        //if (is_dir(array.value[i]))
+        //read_dir(array.value[i], middle, preview);
+        if (cursor.pos == i-1)
+            wattron(win, COLOR_PAIR(1));
+        size_t len = strlen(array.value[i]);
+        int width = getmaxx(win)-2;
+        len = MIN(width, len);
+        char *dstr = malloc(width+1*sizeof(char));
+        strncpy(dstr, array.value[i], len);
+        char *end = &dstr[len];
+        //last bytes are filled with whitespace to take use of color
+        memset(end, ' ', width-len);
+        dstr[width] = '\0';
 
-    mvwaddstr(win, y, x, dstr);
-    free(dstr);
-    ierr = width;
+        mvwaddstr(win, i, 1, dstr);
+        free(dstr);
+        ierr = width;
+        if (cursor.pos == i-1)
+            wattroff(win, COLOR_PAIR(1));
+    }
+    cursor.end = i-2;
 }
 
 void create_windows(void)
 {
     left = subwin(stdscr, max_y, max_x/3, 0, 0);
     middle = subwin(stdscr, max_y, max_x/3, 0, max_x/3);
-    right = subwin(stdscr, max_y, max_x/3, 0, max_x*2/3);
 }
 
 void draw_borders(void)
 {
     box(left, ACS_VLINE, ACS_HLINE);
     box(middle, ACS_VLINE, ACS_HLINE);
-    box(right, ACS_VLINE, ACS_HLINE);
-    //mvprintw(max_y-1, 0, "selected = %d-%d", cursor.pos, cursor.end);
-    mvprintw(max_y-1, 0, "error = %s-%d", err, ierr);
+    mvprintw(max_y-1, 0, "selected = %d-%d", cursor.pos, cursor.end);
+    //mvprintw(max_y-1, 0, "error = %s-%d", err, ierr);
     wrefresh(left);
     wrefresh(middle);
-    wrefresh(right);
 }
 
 void read_dir(const char *dir_path, WINDOW *win)
@@ -92,21 +89,16 @@ void read_dir(const char *dir_path, WINDOW *win)
     DIR *dir = opendir(dir_path);
     struct dirent *ent = readdir(dir);
 
-    size_t count = 1;
+    files = stra_init();
+
     while (ent != NULL)
     {
-        if (cursor.pos == count-1)
-        {
-            wattron(win, COLOR_PAIR(1));
-            print_dir(win, count, 1, ent->d_name);
-            wattroff(win, COLOR_PAIR(1));
-        }
-        else
-            print_dir(win, count, 1, ent->d_name);
-        count++;
+        stra_append(&files, ent->d_name);
         ent = readdir(dir);
     }
-    cursor.end = count-2;
+    stra_sort(&files);
+    print_dir(win, files);
+    stra_destroy(&files);
     closedir(dir);
 }
 
