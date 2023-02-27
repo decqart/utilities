@@ -37,33 +37,41 @@ bool is_dir(char *path)
     return S_ISDIR(statbuf.st_mode);
 }
 
+void fill_space(WINDOW *win, int y, int x, int size)
+{
+    for (int j = x; j < size; ++j)
+        mvwaddch(win, y, j, ' ');
+}
+
 void print_dirs(WINDOW *win, StrArray array)
 {
-    int i;
+    int height = getmaxy(win)-1;
+    int width = getmaxx(win)-2;
+    int count = 1;
     //skipping first one as it is "." the directory itself
-    for (i = 1; array.value[i] != NULL; ++i)
+    for (int i = 1; i < height; ++i)
     {
+        if (array.value[i] == NULL)
+        {
+            fill_space(win, i, 1, width+1);
+            continue;
+        }
         if (cursor.pos == i-1)
         {
             wattron(win, COLOR_PAIR(1));
             selected = array.value[i];
         }
+        count++;
         size_t len = strlen(array.value[i]);
-        int width = getmaxx(win)-2;
         len = MIN(width, len);
-        char *dstr = malloc(width+1*sizeof(char));
-        strncpy(dstr, array.value[i], len);
-        char *end = &dstr[len];
-        //last bytes are filled with whitespace to take use of color
-        memset(end, ' ', width-len);
-        dstr[width] = '\0';
 
-        mvwaddstr(win, i, 1, dstr);
-        free(dstr);
+        mvwaddstr(win, i, 1, array.value[i]);
+        fill_space(win, i, len+1, width+1);
+
         if (cursor.pos == i-1)
             wattroff(win, COLOR_PAIR(1));
     }
-    cursor.end = i-2;
+    cursor.end = count-2;
 }
 
 void create_windows(void)
@@ -76,8 +84,8 @@ void draw_borders(void)
 {
     box(left, ACS_VLINE, ACS_HLINE);
     box(right, ACS_VLINE, ACS_HLINE);
-    //mvprintw(max_y-1, 0, "selected = %d-%d", cursor.pos, cursor.end);
-    mvprintw(max_y-1, 0, "error = %s", selected);
+    mvprintw(max_y-1, 0, "selected = %d-%d", cursor.pos, cursor.end);
+    //mvprintw(max_y-1, 0, "file = %s", selected);
     wrefresh(left);
     wrefresh(right);
 }
