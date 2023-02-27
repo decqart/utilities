@@ -4,18 +4,17 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <curses.h>
 
 #include "StrArray.h"
 
-//void read_dir(const char *dir_path, WINDOW *win, StrArray str_array);
-
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-int max_x, max_y;
+WINDOW *left, *right;
 
-WINDOW *left, *middle;
+int max_x, max_y;
 
 typedef struct {
     int pos;
@@ -26,11 +25,9 @@ Pos cursor;
 
 bool quit = false;
 
-StrArray files;
 StrArray preview;
 char *selected/*file_name*/ = NULL;
 char *err = "None";
-int ierr = 0;
 
 bool is_dir(char *path)
 {
@@ -40,15 +37,17 @@ bool is_dir(char *path)
     return S_ISDIR(statbuf.st_mode);
 }
 
-void print_dir(WINDOW *win, StrArray array)
+void print_dirs(WINDOW *win, StrArray array)
 {
     int i;
+    //skipping first one as it is "." the directory itself
     for (i = 1; array.value[i] != NULL; ++i)
     {
-        //if (is_dir(array.value[i]))
-        //read_dir(array.value[i], middle, preview);
         if (cursor.pos == i-1)
+        {
             wattron(win, COLOR_PAIR(1));
+            selected = array.value[i];
+        }
         size_t len = strlen(array.value[i]);
         int width = getmaxx(win)-2;
         len = MIN(width, len);
@@ -61,7 +60,6 @@ void print_dir(WINDOW *win, StrArray array)
 
         mvwaddstr(win, i, 1, dstr);
         free(dstr);
-        ierr = width;
         if (cursor.pos == i-1)
             wattroff(win, COLOR_PAIR(1));
     }
@@ -70,18 +68,18 @@ void print_dir(WINDOW *win, StrArray array)
 
 void create_windows(void)
 {
-    left = subwin(stdscr, max_y, max_x/3, 0, 0);
-    middle = subwin(stdscr, max_y, max_x/3, 0, max_x/3);
+    left = subwin(stdscr, max_y, max_x/2, 0, 0);
+    right = subwin(stdscr, max_y, max_x/2, 0, max_x/2);
 }
 
 void draw_borders(void)
 {
     box(left, ACS_VLINE, ACS_HLINE);
-    box(middle, ACS_VLINE, ACS_HLINE);
-    mvprintw(max_y-1, 0, "selected = %d-%d", cursor.pos, cursor.end);
-    //mvprintw(max_y-1, 0, "error = %s-%d", err, ierr);
+    box(right, ACS_VLINE, ACS_HLINE);
+    //mvprintw(max_y-1, 0, "selected = %d-%d", cursor.pos, cursor.end);
+    mvprintw(max_y-1, 0, "error = %s", selected);
     wrefresh(left);
-    wrefresh(middle);
+    wrefresh(right);
 }
 
 void read_dir(const char *dir_path, WINDOW *win)
@@ -89,7 +87,7 @@ void read_dir(const char *dir_path, WINDOW *win)
     DIR *dir = opendir(dir_path);
     struct dirent *ent = readdir(dir);
 
-    files = stra_init();
+    StrArray files = stra_init();
 
     while (ent != NULL)
     {
@@ -97,14 +95,18 @@ void read_dir(const char *dir_path, WINDOW *win)
         ent = readdir(dir);
     }
     stra_sort(&files);
-    print_dir(win, files);
+    print_dirs(win, files);
     stra_destroy(&files);
     closedir(dir);
 }
 
 void input_events(void)
 {
-    read_dir(getenv("PWD"), left);
+    //TODO: make cwd better
+    char cwd[256];
+    getcwd(cwd, sizeof(cwd));
+    setenv("PWD", cwd, 1);
+    read_dir(cwd, left);
     draw_borders();
 
     switch(getch())
@@ -120,6 +122,11 @@ void input_events(void)
     case KEY_RIGHT:
         break;
     case '\n':
+        if (is_dir(selected))
+        {
+            chdir(selected);
+            cursor.pos = 0;
+        }
         break;
     case 'q':
         quit = true;
