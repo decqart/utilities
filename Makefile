@@ -8,8 +8,7 @@ O=bin
 default:		\
 	clear		\
 	snake		\
-	calculator	\
-	fm	\
+	fm			\
 	bed			\
 	whoami		\
 	yes
@@ -20,10 +19,6 @@ clean:
 snake: snake.c
 	$(CC) $(CFLAGS) snake.c \
 	-o $(O)/snake $(LDFLAGS)
-
-calculator: calculator.c
-	$(CC) $(CFLAGS) calculator.c \
-	-o $(O)/calc $(LDFLAGS)
 
 fm: fm.c
 	$(CC) $(CFLAGS) fm.c \
