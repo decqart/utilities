@@ -1,25 +1,27 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-
-#define STR_SIZE 1024
 
 int main(int argc, char **argv)
 {
-    char string[STR_SIZE] = "y";
+    char *string = "y";
     if (argc > 1)
-        string[0] = '\0';
-    size_t len = 0;
-    for (int i = 1; i < argc; ++i)
     {
-        len += strlen(argv[i]);
-        if (len > STR_SIZE)
+        size_t len = 1;
+        for (int i = 1; i < argc; ++i)
         {
-            puts("ERROR: string input too large");
-            return 1;
+            len += strlen(argv[i])+1;
         }
-        strcat(string, argv[i]);
-        strcat(string, " ");
+        string = malloc(len*sizeof(char));
+        string[0] = '\0';
+        for (int i = 1; i < argc; ++i)
+        {
+            strcat(string, argv[i]);
+            strcat(string, " ");
+        }
+        string[len-2] = '\0';
     }
     while (1)
         puts(string);
+    return 0;
 }
