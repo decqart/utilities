@@ -1,8 +1,9 @@
 #ifndef STRARRAY_H
 #define STRARRAY_H
 
+#include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
+#include <string.h>
 
 typedef struct {
     char **value;
@@ -25,6 +26,7 @@ StrArray stra_init(void)
 
 void stra_append(StrArray *arr, char *str)
 {
+    if (arr->value == NULL) return;
     if (arr->pos == arr->size)
     {
         arr->size <<= 1;
@@ -37,6 +39,7 @@ void stra_append(StrArray *arr, char *str)
 
 void stra_sort(StrArray *array)
 {
+    if (array->value == NULL) return;
     char *tmp = NULL;
     for (int i = 0; array->value[i] != NULL; i++)
     {
