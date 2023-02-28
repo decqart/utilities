@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +26,6 @@ bool quit = false;
 
 StrArray preview;
 char *selected/*file_name*/ = NULL;
-char *err = "None";
 
 bool is_dir(char *path)
 {
@@ -52,10 +50,7 @@ void print_dirs(WINDOW *win, StrArray array)
     for (int i = 1; i < height; ++i)
     {
         if (array.value[i] == NULL)
-        {
-            fill_space(win, i, 1, width+1);
             continue;
-        }
         if (cursor.pos == i-1)
         {
             wattron(win, COLOR_PAIR(1));
@@ -113,7 +108,6 @@ void input_events(void)
     //TODO: make cwd better
     char cwd[256];
     getcwd(cwd, sizeof(cwd));
-    setenv("PWD", cwd, 1);
     read_dir(cwd, left);
     draw_borders();
 
@@ -142,6 +136,9 @@ void input_events(void)
     default:
         break;
     }
+
+    wclear(left);
+    wclear(right);
 }
 
 int main(int argc, char **argv)
