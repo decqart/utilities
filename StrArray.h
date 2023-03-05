@@ -64,6 +64,16 @@ void stra_print(StrArray array)
     }
 }
 
+void stra_empty(StrArray *array)
+{
+    if (array->value == NULL) return;
+    for (int i = 0; i < array->pos; i++)
+    {
+        array->value[i] = NULL;
+    }
+    array->pos = 0;
+}
+
 void stra_destroy(StrArray *array)
 {
     if (array->value == NULL) return;
