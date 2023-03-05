@@ -21,9 +21,11 @@ typedef struct {
 } Pos;
 
 Pos cursor;
+int movement = 0;
 
 bool quit = false;
 
+StrArray files;
 StrArray preview;
 char *selected/*file_name*/ = NULL;
 
@@ -43,14 +45,12 @@ void fill_space(WINDOW *win, int y, int x, int size)
 
 void print_dirs(WINDOW *win, StrArray array)
 {
-    int height = getmaxy(win)-1;
     int width = getmaxx(win)-2;
     int count = 1;
+
     //skipping first one as it is "." the directory itself
-    for (int i = 1; i < height; ++i)
+    for (int i = 1; array.value[i] != NULL; ++i)
     {
-        if (array.value[i] == NULL)
-            continue;
         if (cursor.pos == i-1)
         {
             wattron(win, COLOR_PAIR(1));
@@ -60,8 +60,8 @@ void print_dirs(WINDOW *win, StrArray array)
         size_t len = strlen(array.value[i]);
         len = MIN(width, len);
 
-        mvwaddstr(win, i, 1, array.value[i]);
-        fill_space(win, i, len+1, width+1);
+        mvwaddstr(win, i-movement, 1, array.value[i]);
+        fill_space(win, i-movement, len+1, width+1);
 
         if (cursor.pos == i-1)
             wattroff(win, COLOR_PAIR(1));
@@ -90,8 +90,6 @@ void read_dir(const char *dir_path, WINDOW *win)
     DIR *dir = opendir(dir_path);
     struct dirent *ent = readdir(dir);
 
-    StrArray files = stra_init();
-
     while (ent != NULL)
     {
         stra_append(&files, ent->d_name);
@@ -99,7 +97,7 @@ void read_dir(const char *dir_path, WINDOW *win)
     }
     stra_sort(&files);
     print_dirs(win, files);
-    stra_destroy(&files);
+    stra_empty(&files);
     closedir(dir);
 }
 
@@ -111,15 +109,27 @@ void input_events(void)
     read_dir(cwd, left);
     draw_borders();
 
+    int lheight = getmaxy(left)-3;
+
     switch(getch())
     {
     case KEY_UP:
-        if (cursor.pos != 0) cursor.pos--;
+        if (cursor.pos != 0)
+        {
+            cursor.pos--;
+            if (cursor.pos < movement)
+                movement--;
+        }
         break;
     case KEY_LEFT:
         break;
     case KEY_DOWN:
-        if (cursor.pos != cursor.end) cursor.pos++;
+        if (cursor.pos != cursor.end)
+        {
+            cursor.pos++;
+            if (cursor.pos > lheight)
+                movement++;
+        }
         break;
     case KEY_RIGHT:
         break;
@@ -159,6 +169,8 @@ int main(int argc, char **argv)
 
     init_pair(1, COLOR_BLACK, COLOR_WHITE);
 
+    files = stra_init();
+
     while (!quit)
     {
         getmaxyx(stdscr, max_y, max_x);
@@ -173,6 +185,7 @@ int main(int argc, char **argv)
         }
     }
 
+    stra_destroy(&files);
     endwin();
     return 0;
 }
