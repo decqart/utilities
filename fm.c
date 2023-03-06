@@ -109,8 +109,6 @@ void input_events(void)
     read_dir(cwd, left);
     draw_borders();
 
-    int lheight = getmaxy(left)-3;
-
     switch(getch())
     {
     case KEY_UP:
@@ -127,7 +125,7 @@ void input_events(void)
         if (cursor.pos != cursor.end)
         {
             cursor.pos++;
-            if (cursor.pos > lheight)
+            if (cursor.pos > max_y-3+movement)
                 movement++;
         }
         break;
@@ -138,6 +136,7 @@ void input_events(void)
         {
             chdir(selected);
             cursor.pos = 0;
+            movement = 0;
         }
         break;
     case 'q':
