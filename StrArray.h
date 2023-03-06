@@ -11,6 +11,17 @@ typedef struct {
     size_t pos;
 } StrArray;
 
+StrArray stra_init(void);
+void stra_append(StrArray *arr, char *str);
+void stra_sort(StrArray *array);
+void stra_print(StrArray array);
+void stra_empty(StrArray *array);
+void stra_destroy(StrArray *array);
+
+#endif /* STRARRAY_H */
+
+#ifdef STRA_IMPLEMENTATION
+
 StrArray stra_init(void)
 {
     StrArray array;
@@ -82,4 +93,4 @@ void stra_destroy(StrArray *array)
     free(array->value);
 }
 
-#endif /* STRARRAY_H*/
+#endif /* STRA_IMPLEMENTATION */
