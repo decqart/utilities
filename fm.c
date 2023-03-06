@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <curses.h>
 
+#define STRA_IMPLEMENTATION
 #include "StrArray.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -25,8 +26,7 @@ int movement = 0;
 
 bool quit = false;
 
-StrArray files;
-StrArray preview;
+StrArray files, preview;
 char *selected/*file_name*/ = NULL;
 
 bool is_dir(char *path)
