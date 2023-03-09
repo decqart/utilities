@@ -1,6 +1,6 @@
 CC=cc
 
-CFLAGS=-g -Wall -std=c99 -pedantic -Os
+CFLAGS=-g -Wall -std=c99 -pedantic -O3
 LDFLAGS=-lcurses
 
 O=bin
@@ -10,6 +10,7 @@ default:		\
 	snake		\
 	fm			\
 	bed			\
+	grep		\
 	whoami		\
 	yes
 
@@ -27,6 +28,10 @@ fm: fm.c
 bed: bed.c
 	$(CC) $(CFLAGS) bed.c \
 	-o $(O)/bed $(LDFLAGS)
+
+grep: grep.c
+	$(CC) $(CFLAGS) grep.c \
+	-o $(O)/grep
 
 whoami: whoami.c
 	$(CC) $(CFLAGS) whoami.c \
