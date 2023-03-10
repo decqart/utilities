@@ -10,6 +10,7 @@ char *read_file(const char *filepath, size_t *file_size)
 {
     if (filepath == NULL) return NULL;
     FILE *file = fopen(filepath, "r");
+    if (file == NULL) return NULL;
 
     fseek(file, 0, SEEK_END);
 
@@ -42,6 +43,8 @@ char *pattern = NULL;
 size_t patlen = 0;
 
 UIntArray nlines = { NULL, 0 };
+bool show_line = true;
+bool show_count = false;
 bool show_line_num = false;
 bool show_file_name = false;
 bool recursive_search = false;
@@ -79,6 +82,7 @@ size_t get_line_pos(size_t pos)
 
 void print_line(char *line, size_t pos, char *file_name)
 {
+    if (!show_line) return;
     static char *prev_line = "";
     static size_t old_size = 0;
     size_t size = 0;
@@ -120,6 +124,11 @@ void parse_opts(char *opts)
             recursive_search = true;
             show_file_name = true;
         }
+        else if (*opts == 'c')
+        {
+            show_line = false;
+            show_count = true;
+        }
         opts++;
     }
 }
@@ -128,11 +137,14 @@ void search_file(char *file_name)
 {
     size_t file_size = 0;
     char *contents = read_file(file_name, &file_size);
+    if (contents == NULL) return;
 
     if (show_line_num)
         get_newlines(contents);
 
     bool compare = false;
+
+    size_t found = 0;
 
     size_t count = 0;
     while (contents[count])
@@ -149,6 +161,7 @@ void search_file(char *file_name)
                     start_diff += 1;
                 }
                 print_line(&contents[count-start_diff+1], count, file_name);
+                found++;
             }
         }
 
@@ -164,6 +177,12 @@ void search_file(char *file_name)
                 break;
             }
         }
+    }
+    if (show_count)
+    {
+        if (show_file_name)
+            printf("%s:", file_name);
+        printf("%ld\n", found);
     }
 
     free(contents);
