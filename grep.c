@@ -30,38 +30,109 @@ error:
     return NULL;
 }
 
-void print_line(char *line)
+typedef struct {
+    size_t *value;
+    size_t size;
+} UIntArray;
+
+char *pattern = NULL;
+
+UIntArray nlines = { NULL, 0 };
+bool show_line_num = false;
+bool show_file_name = false;
+bool recursive_search = false;
+
+void get_newlines(const char *buffer)
 {
-    static char prev_line[256] = "";
-    int size = 0;
+    size_t idx = 0;
+    size_t n_count = 1;
+    nlines.value[0] = 0;
+    while (buffer[idx])
+    {
+        if (buffer[idx] == '\n')
+        {
+            nlines.value[n_count] = idx;
+            n_count++;
+            if (n_count == nlines.size)
+            {
+                nlines.size <<= 1;
+                nlines.value = realloc(nlines.value, nlines.size*sizeof(size_t *));
+            }
+        }
+        idx++;
+    }
+}
+
+size_t get_line_pos(size_t pos)
+{
+    for (int i = 0; i < nlines.size-1; ++i)
+    {
+        if (nlines.value[i] < pos && pos < nlines.value[i+1])
+            return i+1;
+    }
+    return nlines.size;
+}
+
+void print_line(char *line, size_t pos)
+{
+    static char *prev_line = "";
+    static size_t old_size = 0;
+    size_t size = 0;
     while (line[size] != '\n')
         size++;
 
     if (!strncmp(prev_line, line, size)) return;
 
+    if (show_line_num)
+    {
+        size_t line_num = get_line_pos(pos);
+        printf("%ld:", line_num);
+    }
+
+    if (old_size < size)
+    {
+        if (prev_line[0] != '\0')
+            free(prev_line);
+        prev_line = malloc(size+1);
+    }
+    old_size = size;
     strncpy(prev_line, line, size);
     prev_line[size] = '\0';
     puts(prev_line);
+}
+
+void parse_opts(char *opts)
+{
+    while (*opts)
+    {
+        if (*opts == 'n')
+        {
+            nlines.value = malloc(256*sizeof(size_t *));
+            nlines.size = 256;
+            show_line_num = true;
+        }
+        else if (*opts == 'r')
+            recursive_search = true;
+        opts++;
+    }
 }
 
 int main(int argc, char **argv)
 {
     if (argc < 3)
     {
-        puts("Usage: grep [pattern] [file]");
+        puts("Usage: grep [OPTS] [PATTERN] [FILE]");
         exit(0);
     }
 
     char *file_name = NULL;
-    char *pattern = NULL;
 
     bool patt_assigned = false;
-    bool show_line_num = false;
 
     for (int i = 1; i < argc; ++i)
     {
-        if (!strcmp(argv[i], "-n"))
-            show_line_num = true;
+        if (argv[i][0] == '-')
+            parse_opts(argv[i]);
         if (argv[i][0] != '-' && !patt_assigned)
         {
             pattern = argv[i];
@@ -76,10 +147,11 @@ int main(int argc, char **argv)
     size_t file_size = 0;
     char *contents = read_file(file_name, &file_size);
 
+    if (show_line_num)
+        get_newlines(contents);
+
     bool compare = false;
 
-    //printf("file size = %ld\n", file_size);
-    //printf("pattern = %s\n", pattern);
     size_t count = 0;
     while (contents[count])
     {
@@ -88,16 +160,18 @@ int main(int argc, char **argv)
             compare = false;
             if (!strncmp(&contents[count], pattern, patlen))
             {
-                //printf("found \"%s\" at %ld\n", pattern, count);
                 int start_diff = 0;
-                while (contents[count-start_diff] != '\n')
+                while (contents[count-start_diff] != '\n' &&
+                       (count-start_diff+1 != 0))
+                {
                     start_diff += 1;
-                print_line(&contents[count-start_diff+1]);
+                }
+                print_line(&contents[count-start_diff+1], count);
             }
         }
 
         count += patlen;
-        if (count > file_size) count = file_size;
+        if (count > file_size) break;
 
         for (int i = 0; pattern[i]; ++i)
         {
@@ -109,6 +183,7 @@ int main(int argc, char **argv)
             }
         }
     }
-    //printf("count = %ld\n", count);
+    free(nlines.value);
     free(contents);
+    return 0;
 }
