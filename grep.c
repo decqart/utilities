@@ -91,10 +91,7 @@ void print_line(char *line, size_t pos, char *file_name)
         printf("%s:", file_name);
 
     if (show_line_num)
-    {
-        size_t line_num = get_line_pos(pos);
-        printf("%ld:", line_num);
-    }
+        printf("%ld:", get_line_pos(pos));
 
     if (old_size < size)
     {
@@ -119,7 +116,10 @@ void parse_opts(char *opts)
             show_line_num = true;
         }
         else if (*opts == 'r')
+        {
             recursive_search = true;
+            show_file_name = true;
+        }
         opts++;
     }
 }
@@ -196,8 +196,8 @@ int main(int argc, char **argv)
     }
 
     patlen = strlen(pattern);
-    if (files.value[1] != NULL)
-        show_file_name = true;
+
+    show_file_name = files.value[1] != NULL;
 
     for (int i = 0; files.value[i] != NULL; ++i)
         search_file(files.value[i]);
