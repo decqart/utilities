@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define STRA_IMPLEMENTATION
+#include "StrArray.h"
+
 char *read_file(const char *filepath, size_t *file_size)
 {
     if (filepath == NULL) return NULL;
@@ -36,6 +39,7 @@ typedef struct {
 } UIntArray;
 
 char *pattern = NULL;
+size_t patlen = 0;
 
 UIntArray nlines = { NULL, 0 };
 bool show_line_num = false;
@@ -73,7 +77,7 @@ size_t get_line_pos(size_t pos)
     return nlines.size;
 }
 
-void print_line(char *line, size_t pos)
+void print_line(char *line, size_t pos, char *file_name)
 {
     static char *prev_line = "";
     static size_t old_size = 0;
@@ -82,6 +86,9 @@ void print_line(char *line, size_t pos)
         size++;
 
     if (!strncmp(prev_line, line, size)) return;
+
+    if (show_file_name)
+        printf("%s:", file_name);
 
     if (show_line_num)
     {
@@ -117,33 +124,8 @@ void parse_opts(char *opts)
     }
 }
 
-int main(int argc, char **argv)
+void search_file(char *file_name)
 {
-    if (argc < 3)
-    {
-        puts("Usage: grep [OPTS] [PATTERN] [FILE]");
-        exit(0);
-    }
-
-    char *file_name = NULL;
-
-    bool patt_assigned = false;
-
-    for (int i = 1; i < argc; ++i)
-    {
-        if (argv[i][0] == '-')
-            parse_opts(argv[i]);
-        if (argv[i][0] != '-' && !patt_assigned)
-        {
-            pattern = argv[i];
-            patt_assigned = true;
-            continue;
-        }
-        if (argv[i][0] != '-' && patt_assigned)
-            file_name = argv[i];
-    }
-
-    size_t patlen = strlen(pattern);
     size_t file_size = 0;
     char *contents = read_file(file_name, &file_size);
 
@@ -166,7 +148,7 @@ int main(int argc, char **argv)
                 {
                     start_diff += 1;
                 }
-                print_line(&contents[count-start_diff+1], count);
+                print_line(&contents[count-start_diff+1], count, file_name);
             }
         }
 
@@ -183,7 +165,44 @@ int main(int argc, char **argv)
             }
         }
     }
-    free(nlines.value);
+
     free(contents);
+}
+
+int main(int argc, char **argv)
+{
+    if (argc < 3)
+    {
+        puts("Usage: grep [OPTS] [PATTERN] [FILE]");
+        exit(0);
+    }
+
+    StrArray files = stra_init();
+
+    bool patt_assigned = false;
+
+    for (int i = 1; i < argc; ++i)
+    {
+        if (argv[i][0] == '-')
+            parse_opts(argv[i]);
+        if (argv[i][0] != '-' && !patt_assigned)
+        {
+            pattern = argv[i];
+            patt_assigned = true;
+            continue;
+        }
+        if (argv[i][0] != '-' && patt_assigned)
+            stra_append(&files, argv[i]);
+    }
+
+    patlen = strlen(pattern);
+    if (files.value[1] != NULL)
+        show_file_name = true;
+
+    for (int i = 0; files.value[i] != NULL; ++i)
+        search_file(files.value[i]);
+
+    stra_destroy(&files);
+    free(nlines.value);
     return 0;
 }
