@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <fts.h>
 
 #define STRA_IMPLEMENTATION
 #include "StrArray.h"
@@ -32,6 +33,28 @@ char *read_file(const char *filepath, size_t *file_size)
 error:
     fclose(file);
     return NULL;
+}
+
+void traverse_file_tree(StrArray *files)
+{
+    char *path[2] = { ".", NULL };
+
+    FTS *tree = fts_open(path, 0, 0);
+    if (tree == NULL) return;
+
+    FTSENT *node = fts_read(tree);
+
+    while (node != NULL)
+    {
+        if (node->fts_info & FTS_F)
+        {
+            char *file = strdup(node->fts_path);
+            stra_append(files, &file[2]);
+        }
+        node = fts_read(tree);
+    }
+
+    fts_close(tree);
 }
 
 typedef struct {
@@ -84,12 +107,15 @@ void print_line(char *line, size_t pos, char *file_name)
 {
     if (!show_line) return;
     static char *prev_line = "";
+    static char *old_file_name = "";
     static size_t old_size = 0;
     size_t size = 0;
     while (line[size] != '\n')
         size++;
 
-    if (!strncmp(prev_line, line, size)) return;
+    if (!strcmp(old_file_name, file_name) &&
+        !strncmp(prev_line, line, size))
+        return;
 
     if (show_file_name)
         printf("%s:", file_name);
@@ -210,16 +236,22 @@ int main(int argc, char **argv)
             patt_assigned = true;
             continue;
         }
-        if (argv[i][0] != '-' && patt_assigned)
+        if (argv[i][0] != '-' && patt_assigned && !recursive_search)
             stra_append(&files, argv[i]);
     }
 
     patlen = strlen(pattern);
 
-    show_file_name = files.value[1] != NULL;
+    if (recursive_search)
+        traverse_file_tree(&files);
+    else
+        show_file_name = files.value[1] != NULL;
 
     for (int i = 0; files.value[i] != NULL; ++i)
+    {
         search_file(files.value[i]);
+        free(files.value[i]-2);
+    }
 
     stra_destroy(&files);
     free(nlines.value);
