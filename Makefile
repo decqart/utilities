@@ -30,7 +30,7 @@ bed: bed.c
 	-o $(O)/bed $(LDFLAGS)
 
 grep: grep.c
-	$(CC) $(CFLAGS) grep.c \
+	$(CC) $(CFLAGS) -D_DEFAULT_SOURCE grep.c \
 	-o $(O)/grep
 
 whoami: whoami.c
