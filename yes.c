@@ -7,7 +7,7 @@ int main(int argc, char **argv)
     char *string = "y";
     if (argc > 1)
     {
-        size_t len = 1;
+        size_t len = 0;
         for (int i = 1; i < argc; ++i)
         {
             len += strlen(argv[i])+1;
@@ -19,9 +19,8 @@ int main(int argc, char **argv)
             strcat(string, argv[i]);
             strcat(string, " ");
         }
-        string[len-2] = '\0';
+        string[len-1] = '\0';
     }
-    while (1)
-        puts(string);
+    while (puts(string) != EOF);
     return 0;
 }
