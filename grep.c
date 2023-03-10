@@ -57,51 +57,14 @@ void traverse_file_tree(StrArray *files)
     fts_close(tree);
 }
 
-typedef struct {
-    size_t *value;
-    size_t size;
-} UIntArray;
-
 char *pattern = NULL;
 size_t patlen = 0;
 
-UIntArray nlines = { NULL, 0 };
 bool show_line = true;
 bool show_count = false;
 bool show_line_num = false;
 bool show_file_name = false;
 bool recursive_search = false;
-
-void get_newlines(const char *buffer)
-{
-    size_t idx = 0;
-    size_t n_count = 1;
-    nlines.value[0] = 0;
-    while (buffer[idx])
-    {
-        if (buffer[idx] == '\n')
-        {
-            nlines.value[n_count] = idx;
-            n_count++;
-            if (n_count == nlines.size)
-            {
-                nlines.size <<= 1;
-                nlines.value = realloc(nlines.value, nlines.size*sizeof(size_t *));
-            }
-        }
-        idx++;
-    }
-}
-
-size_t get_line_pos(size_t pos)
-{
-    for (int i = 0; i < nlines.size-1; ++i)
-    {
-        if (nlines.value[i] < pos && pos < nlines.value[i+1])
-            return i+1;
-    }
-    return nlines.size;
-}
 
 void print_line(char *line, size_t pos, char *file_name)
 {
@@ -121,7 +84,15 @@ void print_line(char *line, size_t pos, char *file_name)
         printf("%s:", file_name);
 
     if (show_line_num)
-        printf("%ld:", get_line_pos(pos));
+    {
+        size_t nl_count = 1;
+        while (pos--)
+        {
+            if (*(line-pos) == '\n')
+                nl_count++;
+        }
+        printf("%ld:", nl_count);
+    }
 
     if (old_size < size)
     {
@@ -141,8 +112,6 @@ void parse_opts(char *opts)
     {
         if (*opts == 'n')
         {
-            nlines.value = malloc(256*sizeof(size_t *));
-            nlines.size = 256;
             show_line_num = true;
         }
         else if (*opts == 'r')
@@ -165,9 +134,6 @@ void search_file(char *file_name)
     char *contents = read_file(file_name, &file_size);
     if (contents == NULL) return;
 
-    if (show_line_num)
-        get_newlines(contents);
-
     bool compare = false;
 
     size_t found = 0;
@@ -186,7 +152,7 @@ void search_file(char *file_name)
                 {
                     start_diff += 1;
                 }
-                print_line(&contents[count-start_diff+1], count, file_name);
+                print_line(&contents[count-start_diff+1], count-start_diff+1, file_name);
                 found++;
             }
         }
@@ -250,10 +216,10 @@ int main(int argc, char **argv)
     for (int i = 0; files.value[i] != NULL; ++i)
     {
         search_file(files.value[i]);
-        free(files.value[i]-2);
+         if (recursive_search)
+             free(files.value[i]-2);
     }
 
     stra_destroy(&files);
-    free(nlines.value);
     return 0;
 }
