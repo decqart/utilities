@@ -202,22 +202,25 @@ int main(int argc, char **argv)
             patt_assigned = true;
             continue;
         }
-        if (argv[i][0] != '-' && patt_assigned && !recursive_search)
+        if (argv[i][0] != '-' && patt_assigned)
             stra_append(&files, argv[i]);
     }
 
     patlen = strlen(pattern);
 
-    if (recursive_search)
+    if (recursive_search && files.value[0] == NULL)
         traverse_file_tree(&files);
     else
+    {
         show_file_name = files.value[1] != NULL;
+        recursive_search = false;
+    }
 
     for (int i = 0; files.value[i] != NULL; ++i)
     {
         search_file(files.value[i]);
-         if (recursive_search)
-             free(files.value[i]-2);
+        if (recursive_search)
+            free(files.value[i]-2);
     }
 
     stra_destroy(&files);
