@@ -111,13 +111,13 @@ void move_left(Text *text)
 void move_right(Text *text)
 {
     size_t pos = get_actual_pos(text);
-    if (text->line[text->pos.y].len != text->pos.x)
-        text->pos.x++;
-    else if (text->content[pos] == '\n')
+    if (text->content[pos] == '\n')
     {
         text->pos.y++;
         text->pos.x = 0;
     }
+    else if (text->line[text->pos.y].len != text->pos.x)
+        text->pos.x++;
 }
 
 void insert_char(Text *buf, char ch)
@@ -131,8 +131,7 @@ void insert_char(Text *buf, char ch)
     buf->content[buf->filled] = '\0';
 
     size_t pos = get_actual_pos(buf);
-    if (ch != '\n')
-        buf->line[buf->pos.y].len++;
+    buf->line[buf->pos.y].len++;
     for (size_t i = buf->filled-1; pos < i; --i)
         buf->content[i+1] = buf->content[i];
 
@@ -142,15 +141,14 @@ void insert_char(Text *buf, char ch)
 void delete_char(Text *buf)
 {
     if (buf->pos.x == 0 && buf->pos.y == 0) return;
+    move_left(buf);
     buf->filled--;
     size_t pos = get_actual_pos(buf);
     buf->line[buf->pos.y].len--;
-    for (size_t i = pos-1; i < buf->filled; ++i)
+    for (size_t i = pos; i < buf->filled; ++i)
         buf->content[i] = buf->content[i+1];
 
     buf->content[buf->filled] = '\0';
-
-    move_left(buf);
 }
 
 void free_text(Text *buf)
