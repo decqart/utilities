@@ -6,6 +6,7 @@ LDFLAGS=-lcurses
 O=bin
 
 default:		\
+	dirs		\
 	clear		\
 	snake		\
 	fm			\
@@ -16,6 +17,9 @@ default:		\
 
 clean:
 	rm -rf $(O)/*
+
+dirs:
+	mkdir -p $(O)
 
 snake: snake.c
 	$(CC) $(CFLAGS) snake.c \
