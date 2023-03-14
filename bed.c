@@ -24,7 +24,7 @@ typedef struct {
     Line *line;
 } Text;
 
-size_t get_newline_count(const char *str)
+inline size_t get_newline_count(const char *str)
 {
     size_t count = 0;
     while (*str++)
@@ -89,12 +89,21 @@ size_t get_actual_pos(Text *text)
 void move_up(Text *text)
 {
     if (text->pos.y != 0)
+    {
         text->pos.y--;
+        if (text->line[text->pos.y].len-1 < text->pos.x)
+            text->pos.x = text->line[text->pos.y].len-1;
+    }
 }
 
 void move_down(Text *text)
 {
-
+    if (text->line[text->pos.y+1].len != 0)
+    {
+        text->pos.y++;
+        if (text->line[text->pos.y].len-1 < text->pos.x)
+            text->pos.x = text->line[text->pos.y].len;
+    }
 }
 
 void move_left(Text *text)
@@ -132,8 +141,8 @@ void insert_char(Text *buf, char ch)
 
     size_t pos = get_actual_pos(buf);
     buf->line[buf->pos.y].len++;
-    for (size_t i = buf->filled-1; pos < i; --i)
-        buf->content[i+1] = buf->content[i];
+    for (size_t i = buf->filled; pos < i; --i)
+        buf->content[i] = buf->content[i-1];
 
     buf->content[pos] = ch;
 }
@@ -218,7 +227,7 @@ int main(void)
     while (!quit)
     {
         getmaxyx(stdscr, max_y, max_x);
-        mvprintw(0, 0, text.content);
+        mvaddstr(0, 0, text.content);
         mvprintw(max_y-1, 0, "pos = %ld, %ld", text.pos.x, text.pos.y);
         mvprintw(max_y-2, 0, "size = %ld", text.size);
 
@@ -233,6 +242,7 @@ int main(void)
         }
     }
 
+    free_text(&text);
     endwin();
     return 0;
 }
