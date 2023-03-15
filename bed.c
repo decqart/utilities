@@ -215,7 +215,6 @@ void key_events(Text *text)
 
 int main(void)
 {
-    int height = 0, width = 0;
     initscr();
     raw();
     curs_set(1);
@@ -227,19 +226,16 @@ int main(void)
     while (!quit)
     {
         getmaxyx(stdscr, max_y, max_x);
-        mvaddstr(0, 0, text.content);
+        WINDOW *text_win = subwin(stdscr, max_y, max_x-2, 0, 1);
+        waddstr(text_win, text.content);
         mvprintw(max_y-1, 0, "pos = %ld, %ld", text.pos.x, text.pos.y);
         mvprintw(max_y-2, 0, "size = %ld", text.size);
 
-        move(text.pos.y, text.pos.x);
+        move(text.pos.y, text.pos.x+1);
+        wrefresh(text_win);
         key_events(&text);
 
-        if (max_x != width || max_y != height)
-        {
-            width = max_x;
-            height = max_y;
-            clear();
-        }
+        delwin(text_win);
     }
 
     free_text(&text);
