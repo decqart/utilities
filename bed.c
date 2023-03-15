@@ -8,13 +8,20 @@ int max_y = 0, max_x = 0;
 bool quit = false;
 
 typedef struct {
-    size_t x;
-    size_t y;
+    int x;
+    int y;
 } Pos;
 
 typedef struct {
     size_t len;
+    size_t height;
 } Line;
+
+typedef struct {
+    Line *line;
+    size_t count;
+    size_t used;
+} Lines;
 
 typedef struct {
     char *content;
@@ -22,6 +29,7 @@ typedef struct {
     size_t size;
     Pos pos;
     Line *line;
+    size_t line_count;
 } Text;
 
 inline size_t get_newline_count(const char *str)
@@ -39,6 +47,8 @@ Text init_text(char *cont)
     Line *line = NULL;
     size_t filled_size = 0;
     size_t buffer_size = 0;
+    size_t line_count = 0;
+
     if (cont != NULL)
     {
         size_t nl_count = get_newline_count(cont)+1;
@@ -48,6 +58,7 @@ Text init_text(char *cont)
         buffer_size = cont_len;
 
         line = malloc(nl_count * 2 * sizeof(Line));
+        line_count = nl_count * 2;
 
         size_t line_len = 0;
         size_t line_num = 0;
@@ -70,11 +81,16 @@ Text init_text(char *cont)
         buffer[0] = '\0';
         buffer_size = 128;
         line = malloc(20 * sizeof(Line));
+        line_count = 20;
         for (int i = 0; i < 20; ++i)
             line[i].len = 0;
     }
 
-    return (Text) { buffer, filled_size, buffer_size, (Pos) { 0, 0 }, line };
+    return (Text) {
+        buffer, filled_size,
+        buffer_size, (Pos) { 0, 0 },
+        line, line_count
+    };
 }
 
 size_t get_actual_pos(Text *text)
@@ -98,11 +114,12 @@ void move_up(Text *text)
 
 void move_down(Text *text)
 {
+    //FIXIT: replace cursor based on if line has '\n'
     if (text->line[text->pos.y+1].len != 0)
     {
         text->pos.y++;
-        if (text->line[text->pos.y].len-1 < text->pos.x)
-            text->pos.x = text->line[text->pos.y].len;
+        if (text->line[text->pos.y].len-1 <= text->pos.x)
+            text->pos.x = text->line[text->pos.y].len-1;
     }
 }
 
@@ -140,6 +157,14 @@ void insert_char(Text *buf, char ch)
     buf->content[buf->filled] = '\0';
 
     size_t pos = get_actual_pos(buf);
+    if (ch == '\n')
+    {
+        for (int i = buf->line_count; buf->pos.y+1 < i; --i)
+            buf->line[i].len = buf->line[i-1].len;
+
+        buf->line[buf->pos.y+1].len = buf->line[buf->pos.y].len - buf->pos.x;
+        buf->line[buf->pos.y].len = buf->pos.x;
+    }
     buf->line[buf->pos.y].len++;
     for (size_t i = buf->filled; pos < i; --i)
         buf->content[i] = buf->content[i-1];
@@ -153,7 +178,17 @@ void delete_char(Text *buf)
     move_left(buf);
     buf->filled--;
     size_t pos = get_actual_pos(buf);
-    buf->line[buf->pos.y].len--;
+
+    if (buf->content[pos] == '\n')
+    {
+        buf->line[buf->pos.y].len += buf->line[buf->pos.y+1].len-1;
+
+        for (int i = buf->pos.y+1; i < buf->line_count; ++i)
+            buf->line[i].len = buf->line[i+1].len;
+    }
+    else
+        buf->line[buf->pos.y].len--;
+
     for (size_t i = pos; i < buf->filled; ++i)
         buf->content[i] = buf->content[i+1];
 
@@ -230,6 +265,7 @@ int main(void)
         waddstr(text_win, text.content);
         mvprintw(max_y-1, 0, "pos = %ld, %ld", text.pos.x, text.pos.y);
         mvprintw(max_y-2, 0, "size = %ld", text.size);
+        mvprintw(max_y-3, 0, "line len = %ld", text.line[text.pos.y].len);
 
         move(text.pos.y, text.pos.x+1);
         wrefresh(text_win);
