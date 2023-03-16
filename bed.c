@@ -4,15 +4,10 @@
 #include <stdbool.h>
 #include <curses.h>
 
-bool quit = false;
-
 typedef struct {
     int x;
     int y;
 } Pos;
-
-Pos max = { 0, 0 };
-Pos cursor_pos = { 0, 0 };
 
 typedef struct {
     size_t len;
@@ -32,6 +27,9 @@ typedef struct {
     Pos pos;
     Lines lines;
 } Text;
+
+Pos max = { 0, 0 };
+bool quit = false;
 
 char *read_file(const char *filepath, size_t *file_size)
 {
@@ -151,10 +149,12 @@ void move_down(Text *text)
     {
         text->pos.y++;
         if (text->lines.idx[text->pos.y].len-1 <= text->pos.x)
+        {
             text->pos.x = text->lines.idx[text->pos.y].len-1;
+            if (text->pos.y == text->lines.used)
+                text->pos.x++;
+        }
     }
-    if (text->pos.y == text->lines.used)
-        text->pos.x++;
 }
 
 void move_left(Text *text)
@@ -282,7 +282,7 @@ void key_events(Text *text)
         quit = true;
         break;
     default:
-        if (0 <= ch && ch <= 127)
+        if (31 < ch && ch < 127)
         {
             insert_char(text, ch);
             text->pos.x++;
@@ -291,6 +291,30 @@ void key_events(Text *text)
     }
 
     clear();
+}
+
+void print_text(Text text)
+{
+    size_t line_num = 0;
+    size_t line_idx = 0;
+    if (text.pos.y > max.y-1)
+        line_num = max.y-1 - text.pos.y;
+    while (*text.content)
+    {
+        mvaddch(line_num, line_idx, *text.content);
+        line_idx++;
+        if (*text.content == '\n')
+        {
+            line_num++;
+            line_idx = 0;
+        }
+        text.content++;
+    }
+}
+
+void update_cursor(Pos pos)
+{
+    move(pos.y, pos.x);
 }
 
 int main(int argc, char **argv)
@@ -306,13 +330,13 @@ int main(int argc, char **argv)
     while (!quit)
     {
         getmaxyx(stdscr, max.y, max.x);
-        addstr(text.content);
-        mvprintw(max.y-1, 0, "pos = %ld, %ld", text.pos.x, text.pos.y);
+        print_text(text);
+        /*mvprintw(max.y-1, 0, "pos = %ld, %ld", text.pos.x, text.pos.y);
         mvprintw(max.y-2, 0, "size = %ld", text.size);
         mvprintw(max.y-3, 0, "line len = %ld", text.lines.idx[text.pos.y].len);
-        mvprintw(max.y-1, 12, "line size = %ld", text.lines.count);
+        mvprintw(max.y-1, 12, "line size = %ld", text.lines.count);*/
 
-        move(text.pos.y, text.pos.x);
+        update_cursor(text.pos);
         key_events(&text);
     }
 
