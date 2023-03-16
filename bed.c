@@ -4,13 +4,15 @@
 #include <stdbool.h>
 #include <curses.h>
 
-int max_y = 0, max_x = 0;
 bool quit = false;
 
 typedef struct {
     int x;
     int y;
 } Pos;
+
+Pos max = { 0, 0 };
+Pos cursor_pos = { 0, 0 };
 
 typedef struct {
     size_t len;
@@ -31,6 +33,34 @@ typedef struct {
     Lines lines;
 } Text;
 
+char *read_file(const char *filepath, size_t *file_size)
+{
+    if (filepath == NULL) return NULL;
+    FILE *file = fopen(filepath, "r");
+    if (file == NULL) return NULL;
+
+    fseek(file, 0, SEEK_END);
+
+    long size = ftell(file);
+    if (size < 0) goto error;
+    *file_size = size;
+
+    char *buffer = malloc(size+1);
+    if (buffer == NULL) goto error;
+
+    fseek(file, 0, SEEK_SET);
+
+    fread(buffer, 1, size, file);
+
+    buffer[size] = '\0';
+
+    fclose(file);
+    return buffer;
+error:
+    fclose(file);
+    return NULL;
+}
+
 inline size_t get_newline_count(const char *str)
 {
     size_t count = 0;
@@ -40,10 +70,8 @@ inline size_t get_newline_count(const char *str)
     return count;
 }
 
-Lines init_lines(size_t line_count)
+Lines init_lines(size_t size, size_t used)
 {
-    size_t size = line_count * 2;
-    size_t used = line_count;
     Line *line = malloc(size * sizeof(Line));
     return (Lines) { line, size, used };
 }
@@ -57,44 +85,40 @@ void update_lines(Lines *line)
     }
 }
 
-Text init_text(char *cont)
+Text init_text_from_file(char *file_name)
 {
     char *buffer = NULL;
     size_t filled_size = 0;
     size_t buffer_size = 0;
     Lines lines;
 
-    if (cont != NULL)
+    if (file_name != NULL)
     {
-        size_t nl_count = get_newline_count(cont)+1;
-        size_t cont_len = strlen(cont);
-        buffer = malloc(cont_len * 2 * sizeof(char));
-        memcpy(buffer, cont, cont_len+1);
-        buffer_size = cont_len;
+        buffer = read_file(file_name, &filled_size);
+        size_t nl_count = get_newline_count(buffer)+1;
 
-        lines = init_lines(nl_count);
+        lines = init_lines(nl_count*2, nl_count);
 
         size_t line_len = 0;
         size_t line_num = 0;
-        for (int i = 0; i < buffer_size; ++i)
+        for (int i = 0; i < filled_size; ++i)
         {
+            line_len++;
             if (buffer[i] == '\n')
             {
                 lines.idx[line_num].len = line_len;
                 line_num++;
                 line_len = 0;
-                continue;
             }
-            line_len++;
         }
-        filled_size = cont_len;
+        buffer_size = filled_size*2;
     }
     else
     {
         buffer = malloc(128 * sizeof(char));
         buffer[0] = '\0';
         buffer_size = 128;
-        lines = init_lines(32);
+        lines = init_lines(32, 0);
         for (int i = 0; i < 20; ++i)
             lines.idx[i].len = 0;
     }
@@ -123,13 +147,14 @@ void move_up(Text *text)
 
 void move_down(Text *text)
 {
-    //FIXIT: replace cursor based on if line has '\n'
     if (text->lines.idx[text->pos.y+1].len != 0)
     {
         text->pos.y++;
         if (text->lines.idx[text->pos.y].len-1 <= text->pos.x)
             text->pos.x = text->lines.idx[text->pos.y].len-1;
     }
+    if (text->pos.y == text->lines.used)
+        text->pos.x++;
 }
 
 void move_left(Text *text)
@@ -221,6 +246,8 @@ void free_text(Text *buf)
     buf->pos = (Pos) { 0, 0 };
 }
 
+#define ctrl(x) ((x) & 0x1f)
+
 void key_events(Text *text)
 {
     int ch = getch();
@@ -247,11 +274,11 @@ void key_events(Text *text)
         delete_char(text);
         break;
     case KEY_BACKSPACE:
-        if (text->pos.x == 0 && text->pos.y == 0) return;
+        if (text->pos.x == 0 && text->pos.y == 0) break;
         move_left(text);
         delete_char(text);
         break;
-    case 27: // ESCAPE
+    case ctrl('x'):
         quit = true;
         break;
     default:
@@ -266,7 +293,7 @@ void key_events(Text *text)
     clear();
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     initscr();
     raw();
@@ -274,22 +301,19 @@ int main(void)
     noecho();
     keypad(stdscr, true);
 
-    Text text = init_text(NULL);
+    Text text = init_text_from_file(argv[1]);
 
     while (!quit)
     {
-        getmaxyx(stdscr, max_y, max_x);
-        WINDOW *text_win = subwin(stdscr, max_y, max_x-2, 0, 1);
-        waddstr(text_win, text.content);
-        mvprintw(max_y-1, 0, "pos = %ld, %ld", text.pos.x, text.pos.y);
-        mvprintw(max_y-2, 0, "size = %ld", text.size);
-        mvprintw(max_y-3, 0, "line len = %ld", text.lines.idx[text.pos.y].len);
-        mvprintw(max_y-1, 12, "line size = %ld", text.lines.count);
+        getmaxyx(stdscr, max.y, max.x);
+        addstr(text.content);
+        mvprintw(max.y-1, 0, "pos = %ld, %ld", text.pos.x, text.pos.y);
+        mvprintw(max.y-2, 0, "size = %ld", text.size);
+        mvprintw(max.y-3, 0, "line len = %ld", text.lines.idx[text.pos.y].len);
+        mvprintw(max.y-1, 12, "line size = %ld", text.lines.count);
 
-        move(text.pos.y, text.pos.x+1);
+        move(text.pos.y, text.pos.x);
         key_events(&text);
-
-        delwin(text_win);
     }
 
     free_text(&text);
