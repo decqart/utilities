@@ -93,7 +93,7 @@ Text init_text_from_file(char *file_name)
     if (file_name != NULL)
     {
         buffer = read_file(file_name, &filled_size);
-        size_t nl_count = get_newline_count(buffer)+1;
+        size_t nl_count = get_newline_count(buffer);
 
         lines = init_lines(nl_count*2, nl_count);
 
@@ -109,7 +109,7 @@ Text init_text_from_file(char *file_name)
                 line_len = 0;
             }
         }
-        buffer_size = filled_size*2;
+        buffer_size = filled_size+1;
     }
     else
     {
@@ -117,30 +117,29 @@ Text init_text_from_file(char *file_name)
         buffer[0] = '\0';
         buffer_size = 128;
         lines = init_lines(32, 0);
-        for (int i = 0; i < 20; ++i)
+        for (int i = 0; i < 32; ++i)
             lines.idx[i].len = 0;
     }
 
     return (Text) { buffer, filled_size, buffer_size, (Pos) { 0, 0 }, lines };
 }
 
-size_t get_actual_pos(Text *text)
+size_t get_actual_pos(Text text)
 {
     size_t pos = 0;
-    for (int i = 0; i < text->pos.y; ++i)
-        pos += text->lines.idx[i].len;
+    for (int i = 0; i < text.pos.y; ++i)
+        pos += text.lines.idx[i].len;
 
-    return pos+text->pos.x;
+    return pos+text.pos.x;
 }
 
 void move_up(Text *text)
 {
-    if (text->pos.y != 0)
-    {
-        text->pos.y--;
-        if (text->lines.idx[text->pos.y].len-1 < text->pos.x)
-            text->pos.x = text->lines.idx[text->pos.y].len-1;
-    }
+    if (text->pos.y == 0) return;
+
+    text->pos.y--;
+    if (text->lines.idx[text->pos.y].len-1 < text->pos.x)
+        text->pos.x = text->lines.idx[text->pos.y].len-1;
 }
 
 void move_down(Text *text)
@@ -170,7 +169,7 @@ void move_left(Text *text)
 
 void move_right(Text *text)
 {
-    size_t pos = get_actual_pos(text);
+    size_t pos = get_actual_pos(*text);
     if (text->content[pos] == '\n')
     {
         text->pos.y++;
@@ -180,6 +179,7 @@ void move_right(Text *text)
         text->pos.x++;
 }
 
+//FIXIT
 void insert_char(Text *buf, char ch)
 {
     Line *line = buf->lines.idx;
@@ -192,7 +192,6 @@ void insert_char(Text *buf, char ch)
     }
     buf->content[buf->filled] = '\0';
 
-    size_t pos = get_actual_pos(buf);
     if (ch == '\n')
     {
         for (int i = buf->lines.count; buf->pos.y+1 < i; --i)
@@ -204,35 +203,36 @@ void insert_char(Text *buf, char ch)
         update_lines(&buf->lines);
     }
     line[buf->pos.y].len++;
-    for (size_t i = buf->filled; pos < i; --i)
+
+    size_t pos = get_actual_pos(*buf);
+    for (size_t i = buf->filled-1; pos < i; --i)
         buf->content[i] = buf->content[i-1];
 
     buf->content[pos] = ch;
 }
 
+//FIXIT
 void delete_char(Text *buf)
 {
     Line *line = buf->lines.idx;
 
-    size_t pos = get_actual_pos(buf);
+    size_t pos = get_actual_pos(*buf);
     if (buf->content[pos] == '\0') return;
-    buf->filled--;
 
     if (buf->content[pos] == '\n')
     {
-        line[buf->pos.y].len += line[buf->pos.y+1].len-1;
+        line[buf->pos.y].len += line[buf->pos.y+1].len;
 
         for (int i = buf->pos.y+1; i < buf->lines.count; ++i)
             line[i].len = line[i+1].len;
         buf->lines.used--;
     }
-    else
-        buf->lines.idx[buf->pos.y].len--;
+    buf->lines.idx[buf->pos.y].len--;
 
     for (size_t i = pos; i < buf->filled; ++i)
         buf->content[i] = buf->content[i+1];
 
-    buf->content[buf->filled] = '\0';
+    buf->filled--;
 }
 
 void free_text(Text *buf)
@@ -331,10 +331,10 @@ int main(int argc, char **argv)
     {
         getmaxyx(stdscr, max.y, max.x);
         print_text(text);
-        /*mvprintw(max.y-1, 0, "pos = %ld, %ld", text.pos.x, text.pos.y);
+        mvprintw(max.y-1, 0, "char = '%c'", text.content[get_actual_pos(text)]);
         mvprintw(max.y-2, 0, "size = %ld", text.size);
         mvprintw(max.y-3, 0, "line len = %ld", text.lines.idx[text.pos.y].len);
-        mvprintw(max.y-1, 12, "line size = %ld", text.lines.count);*/
+        mvprintw(max.y-1, 12, "line size = %ld", text.lines.used);
 
         update_cursor(text.pos);
         key_events(&text);
