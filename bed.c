@@ -194,7 +194,7 @@ void insert_char(Text *buf, char ch)
         buf->lines.used++;
         update_lines(&buf->lines);
 
-        for (size_t i = buf->lines.used; buf->pos.y+2 < i; --i)
+        for (size_t i = buf->lines.used; buf->pos.y+1 < i; --i)
             buf->lines.idx[i].len = buf->lines.idx[i-1].len;
 
         buf->lines.idx[buf->pos.y+1].len = buf->lines.idx[buf->pos.y].len - buf->pos.x;
