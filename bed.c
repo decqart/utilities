@@ -147,7 +147,7 @@ void move_down(Text *text)
     if (text->lines.idx[text->pos.y+1].len != 0)
     {
         text->pos.y++;
-        if (text->lines.idx[text->pos.y].len-1 <= text->pos.x)
+        if (text->lines.idx[text->pos.y].len-1 < text->pos.x)
         {
             text->pos.x = text->lines.idx[text->pos.y].len-1;
             if (text->pos.y == text->lines.used)
@@ -179,11 +179,8 @@ void move_right(Text *text)
         text->pos.x++;
 }
 
-//FIXIT
 void insert_char(Text *buf, char ch)
 {
-    Line *line = buf->lines.idx;
-
     buf->filled++;
     if (buf->filled == buf->size)
     {
@@ -194,37 +191,35 @@ void insert_char(Text *buf, char ch)
 
     if (ch == '\n')
     {
-        for (int i = buf->lines.count; buf->pos.y+1 < i; --i)
-            line[i].len = line[i-1].len;
-
-        line[buf->pos.y+1].len = line[buf->pos.y].len - buf->pos.x;
-        line[buf->pos.y].len = buf->pos.x;
         buf->lines.used++;
         update_lines(&buf->lines);
+
+        for (size_t i = buf->lines.used; buf->pos.y+2 < i; --i)
+            buf->lines.idx[i].len = buf->lines.idx[i-1].len;
+
+        buf->lines.idx[buf->pos.y+1].len = buf->lines.idx[buf->pos.y].len - buf->pos.x;
+        buf->lines.idx[buf->pos.y].len = buf->pos.x;
     }
-    line[buf->pos.y].len++;
+    buf->lines.idx[buf->pos.y].len++;
 
     size_t pos = get_actual_pos(*buf);
-    for (size_t i = buf->filled-1; pos < i; --i)
+    for (size_t i = buf->filled; pos < i; --i)
         buf->content[i] = buf->content[i-1];
 
     buf->content[pos] = ch;
 }
 
-//FIXIT
 void delete_char(Text *buf)
 {
-    Line *line = buf->lines.idx;
-
     size_t pos = get_actual_pos(*buf);
     if (buf->content[pos] == '\0') return;
 
     if (buf->content[pos] == '\n')
     {
-        line[buf->pos.y].len += line[buf->pos.y+1].len;
+        buf->lines.idx[buf->pos.y].len += buf->lines.idx[buf->pos.y+1].len;
 
-        for (int i = buf->pos.y+1; i < buf->lines.count; ++i)
-            line[i].len = line[i+1].len;
+        for (int i = buf->pos.y+1; i < buf->lines.used; ++i)
+            buf->lines.idx[i].len = buf->lines.idx[i+1].len;
         buf->lines.used--;
     }
     buf->lines.idx[buf->pos.y].len--;
@@ -303,6 +298,7 @@ void print_text(Text text)
     {
         mvaddch(line_num, line_idx, *text.content);
         line_idx++;
+
         if (*text.content == '\n')
         {
             line_num++;
@@ -332,9 +328,9 @@ int main(int argc, char **argv)
         getmaxyx(stdscr, max.y, max.x);
         print_text(text);
         mvprintw(max.y-1, 0, "char = '%c'", text.content[get_actual_pos(text)]);
-        mvprintw(max.y-2, 0, "size = %ld", text.size);
+        mvprintw(max.y-2, 0, "size = %ld filled = %ld", text.size, text.filled);
         mvprintw(max.y-3, 0, "line len = %ld", text.lines.idx[text.pos.y].len);
-        mvprintw(max.y-1, 12, "line size = %ld", text.lines.used);
+        mvprintw(max.y-1, 12, "line size = %ld count = %ld", text.lines.count, text.lines.used);
 
         update_cursor(text.pos);
         key_events(&text);
