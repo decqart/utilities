@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <time.h>
+#include <unistd.h>
 #include <curses.h>
 
 int max_x, max_y;
@@ -28,13 +30,13 @@ void apple(void)
         apple_y = rand() % (max_y-1);
         change_apple = false;
     }
-    mvprintw(apple_y, apple_x, "A");
+    mvaddch(apple_y, apple_x, 'A');
 }
 
 int snake_y = 2;
 int snake_x = 2;
 vec snke_dir = { .x=1, .y=0 };
-vec body_pos[200];
+vec body_pos[256];
 int pos_count = 0;
 
 void render_stuff(void)
@@ -45,11 +47,11 @@ void render_stuff(void)
     if (body_size-1 < pos_count)
         pos_count = 0;
 
-    mvprintw(snake_y, snake_x, "O");
+    mvaddch(snake_y, snake_x, 'O');
 
     for (int i = 0; i < body_size; ++i)
     {
-        mvprintw(body_pos[i].y, body_pos[i].x, "O");
+        mvaddch(body_pos[i].y, body_pos[i].x, 'O');
 
         if (snake_x == body_pos[i].x &&
             snake_y == body_pos[i].y)
@@ -61,33 +63,28 @@ void render_stuff(void)
 void snake(void)
 {
     render_stuff();
-    switch(getch())
+    switch(tolower(getch()))
     {
-    case 'W':
     case 'w':
         snke_dir.x = 0;
         if (snke_dir.y != 1)
             snke_dir.y = -1;
         break;
-    case 'A':
     case 'a':
         if (snke_dir.x != 1)
             snke_dir.x = -1;
         snke_dir.y = 0;
         break;
-    case 'S':
     case 's':
         snke_dir.x = 0;
         if (snke_dir.y != -1)
             snke_dir.y = 1;
         break;
-    case 'D':
     case 'd':
         if (snke_dir.x != -1)
             snke_dir.x = 1;
         snke_dir.y = 0;
         break;
-    case 'Q':
     case 'q':
         quit = true;
         break;
@@ -104,7 +101,7 @@ void snake(void)
         if (score == 200)
         {
             endwin();
-            printf("You WON!");
+            puts("You WON!");
         }
         body_size++;
     }
@@ -134,6 +131,6 @@ int main(void)
     }
     endwin();
     printf("Score: %d\n", score);
-    printf("GAME OVER\n");
+    puts("GAME OVER");
     return 0;
 }
