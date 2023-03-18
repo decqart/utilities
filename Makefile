@@ -1,6 +1,6 @@
 CC=cc
 
-CFLAGS=-g -Wall -std=c99 -pedantic -O3
+CFLAGS=-g -Wall -std=c99 -pedantic -O3 -D_DEFAULT_SOURCE
 LDFLAGS=-lcurses
 
 O=bin
@@ -34,7 +34,7 @@ bed: bed.c
 	-o $(O)/bed $(LDFLAGS)
 
 grep: grep.c
-	$(CC) $(CFLAGS) -D_DEFAULT_SOURCE grep.c \
+	$(CC) $(CFLAGS) grep.c \
 	-o $(O)/grep
 
 whoami: whoami.c
