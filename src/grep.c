@@ -9,7 +9,6 @@
 
 char *read_file(const char *filepath, size_t *file_size)
 {
-    if (filepath == NULL) return NULL;
     FILE *file = fopen(filepath, "r");
     if (file == NULL) return NULL;
 

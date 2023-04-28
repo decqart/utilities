@@ -1,9 +1,7 @@
 #ifndef STRARRAY_H
 #define STRARRAY_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
 
 typedef struct {
     char **value;
@@ -21,6 +19,10 @@ void stra_destroy(StrArray *array);
 #endif /* STRARRAY_H */
 
 #ifdef STRA_IMPLEMENTATION
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 StrArray stra_init(void)
 {
@@ -42,6 +44,10 @@ void stra_append(StrArray *arr, char *str)
     {
         arr->size <<= 1;
         arr->value = realloc(arr->value, arr->size*sizeof(char *));
+        for (int i = arr->pos+1; i < arr->size; ++i)
+        {
+            arr->value[i] = NULL;
+        }
     }
 
     arr->value[arr->pos] = str;
