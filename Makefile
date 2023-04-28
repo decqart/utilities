@@ -4,6 +4,7 @@ CFLAGS=-g -Wall -std=c99 -pedantic -O3 -D_DEFAULT_SOURCE
 LDFLAGS=-lcurses
 
 O=bin
+S=src
 
 default:		\
 	dirs		\
@@ -21,30 +22,30 @@ clean:
 dirs:
 	mkdir -p $(O)
 
-snake: snake.c
-	$(CC) $(CFLAGS) snake.c \
+snake: $(S)/snake.c
+	$(CC) $(CFLAGS) $(S)/snake.c \
 	-o $(O)/snake $(LDFLAGS)
 
-fm: fm.c
-	$(CC) $(CFLAGS) fm.c \
+fm: $(S)/fm.c
+	$(CC) $(CFLAGS) $(S)/fm.c \
 	-o $(O)/fm $(LDFLAGS)
 
-bed: bed.c
-	$(CC) $(CFLAGS) bed.c \
+bed: $(S)/bed.c
+	$(CC) $(CFLAGS) $(S)/bed.c \
 	-o $(O)/bed $(LDFLAGS)
 
-grep: grep.c
-	$(CC) $(CFLAGS) grep.c \
+grep: $(S)/grep.c
+	$(CC) $(CFLAGS) $(S)/grep.c \
 	-o $(O)/grep
 
-whoami: whoami.c
-	$(CC) $(CFLAGS) whoami.c \
+whoami: $(S)/whoami.c
+	$(CC) $(CFLAGS) $(S)/whoami.c \
 	-o $(O)/whoami
 
-yes: yes.c
-	$(CC) $(CFLAGS) yes.c \
+yes: $(S)/yes.c
+	$(CC) $(CFLAGS) $(S)/yes.c \
 	-o $(O)/yes
 
-clear: clear.c
-	$(CC) $(CFLAGS) clear.c \
+clear: $(S)/clear.c
+	$(CC) $(CFLAGS) $(S)/clear.c \
 	-o $(O)/clear
