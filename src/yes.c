@@ -4,23 +4,22 @@
 
 int main(int argc, char **argv)
 {
-    char *string = "y";
+    char *str = "y";
     if (argc > 1)
     {
         size_t len = 0;
         for (int i = 1; i < argc; ++i)
-        {
             len += strlen(argv[i])+1;
-        }
-        string = malloc(len*sizeof(char));
-        string[0] = '\0';
+
+        str = malloc(len);
+        str[0] = '\0';
         for (int i = 1; i < argc; ++i)
         {
-            strcat(string, argv[i]);
-            strcat(string, " ");
+            strcat(str, argv[i]);
+            strcat(str, " ");
         }
-        string[len-1] = '\0';
+        str[len-1] = '\0';
     }
-    while (puts(string) != EOF);
+    while (puts(str) != EOF);
     return 0;
 }

@@ -240,7 +240,7 @@ void free_text(Text *buf)
     buf->pos = (Pos) { 0, 0 };
 }
 
-#define ctrl(x) ((x) & 0x1f)
+#define CTRL(x) ((x) & 0x1f)
 
 void key_events(Text *text)
 {
@@ -272,7 +272,7 @@ void key_events(Text *text)
         move_left(text);
         delete_char(text);
         break;
-    case ctrl('x'):
+    case CTRL('x'):
         quit = true;
         break;
     default:
