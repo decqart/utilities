@@ -185,7 +185,7 @@ int main(int argc, char **argv)
     if (argc < 3)
     {
         puts("Usage: grep [OPTS] [PATTERN] [FILE]");
-        exit(0);
+        return 0;
     }
 
     StrArray files = stra_init();
