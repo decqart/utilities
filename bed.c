@@ -31,10 +31,9 @@ typedef struct {
 Pos max = { 0, 0 };
 bool quit = false;
 
-char *read_file(const char *filepath, size_t *file_size)
+char *read_file(const char *file_path, size_t *file_size)
 {
-    if (filepath == NULL) return NULL;
-    FILE *file = fopen(filepath, "r");
+    FILE *file = fopen(file_path, "r");
     if (file == NULL) return NULL;
 
     fseek(file, 0, SEEK_END);
@@ -43,7 +42,7 @@ char *read_file(const char *filepath, size_t *file_size)
     if (size < 0) goto error;
     *file_size = size;
 
-    char *buffer = malloc(size+1);
+    char *buffer = malloc(size*2);
     if (buffer == NULL) goto error;
 
     fseek(file, 0, SEEK_SET);
@@ -109,7 +108,7 @@ Text init_text_from_file(char *file_name)
                 line_len = 0;
             }
         }
-        buffer_size = filled_size+1;
+        buffer_size = filled_size*2;
     }
     else
     {
