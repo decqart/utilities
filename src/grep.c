@@ -7,9 +7,9 @@
 #define STRA_IMPLEMENTATION
 #include "StrArray.h"
 
-char *read_file(const char *filepath, size_t *file_size)
+char *read_file(const char *file_path, size_t *file_size)
 {
-    FILE *file = fopen(filepath, "r");
+    FILE *file = fopen(file_path, "r");
     if (file == NULL) return NULL;
 
     fseek(file, 0, SEEK_END);

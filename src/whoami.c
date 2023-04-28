@@ -3,6 +3,8 @@
 
 int main(void)
 {
-    puts(getlogin());
+    char *name = getlogin();
+    if (name != NULL)
+        puts(name);
     return 0;
 }

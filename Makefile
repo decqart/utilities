@@ -1,6 +1,6 @@
 CC=cc
 
-CFLAGS=-ggdb -Wall -std=c99 -pedantic -O3 -D_DEFAULT_SOURCE
+CFLAGS=-g -Wall -std=c99 -pedantic -O3 -D_DEFAULT_SOURCE
 LDFLAGS=-lcurses
 
 O=bin
@@ -8,6 +8,7 @@ S=src
 
 default:	\
 	dirs	\
+	cat		\
 	clear	\
 	snake	\
 	fm		\
@@ -49,3 +50,7 @@ yes: $(S)/yes.c
 clear: $(S)/clear.c
 	$(CC) $(CFLAGS) $< \
 	-o $(O)/clear
+
+cat: $(S)/cat.c
+	$(CC) $(CFLAGS) $< \
+	-o $(O)/cat
