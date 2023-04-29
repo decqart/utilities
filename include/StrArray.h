@@ -9,8 +9,9 @@ typedef struct {
     size_t pos;
 } StrArray;
 
-StrArray stra_init(void);
+StrArray stra_init(size_t size);
 void stra_append(StrArray *arr, char *str);
+void stra_replace(StrArray *array, size_t n, char *str);
 void stra_sort(StrArray *array);
 void stra_print(StrArray array);
 void stra_empty(StrArray *array);
@@ -24,15 +25,15 @@ void stra_destroy(StrArray *array);
 #include <stdlib.h>
 #include <string.h>
 
-StrArray stra_init(void)
+StrArray stra_init(size_t size)
 {
     StrArray array;
-    array.value = malloc(50*sizeof(char *));
-    for (int i = 0; i < 50; ++i)
+    array.value = malloc(size*sizeof(char *));
+    for (int i = 0; i < size; ++i)
     {
         array.value[i] = NULL;
     }
-    array.size = 50;
+    array.size = size;
     array.pos = 0;
     return array;
 }
@@ -52,6 +53,12 @@ void stra_append(StrArray *arr, char *str)
 
     arr->value[arr->pos] = str;
     arr->pos++;
+}
+
+void stra_replace(StrArray *array, size_t n, char *str)
+{
+    if (array->pos < n) return;
+    array->value[n] = str;
 }
 
 void stra_sort(StrArray *array)

@@ -5,34 +5,10 @@
 #include <fts.h>
 
 #define STRA_IMPLEMENTATION
-#include "StrArray.h"
+#include <StrArray.h>
 
-char *read_file(const char *file_path, size_t *file_size)
-{
-    FILE *file = fopen(file_path, "r");
-    if (file == NULL) return NULL;
-
-    fseek(file, 0, SEEK_END);
-
-    long size = ftell(file);
-    if (size < 0) goto error;
-    *file_size = size;
-
-    char *buffer = malloc(size+1);
-    if (buffer == NULL) goto error;
-
-    fseek(file, 0, SEEK_SET);
-
-    fread(buffer, 1, size, file);
-
-    buffer[size] = '\0';
-
-    fclose(file);
-    return buffer;
-error:
-    fclose(file);
-    return NULL;
-}
+#define FILE_IMPLEMENTATION
+#include <File.h>
 
 void traverse_file_tree(StrArray *files)
 {
@@ -129,39 +105,38 @@ void parse_opts(char *opts)
 
 void search_file(char *file_name)
 {
-    size_t file_size = 0;
-    char *contents = read_file(file_name, &file_size);
-    if (contents == NULL) return;
+    Str contents = read_file(file_name);
+    if (contents.str == NULL) return;
 
     bool compare = false;
 
     size_t found = 0;
 
     size_t count = 0;
-    while (contents[count])
+    while (contents.str[count])
     {
         if (compare)
         {
             compare = false;
-            if (!strncmp(&contents[count], pattern, patlen))
+            if (!strncmp(&contents.str[count], pattern, patlen))
             {
                 int start_diff = 0;
-                while (contents[count-start_diff] != '\n' &&
+                while (contents.str[count-start_diff] != '\n' &&
                        (count-start_diff+1 != 0))
                 {
                     start_diff += 1;
                 }
-                print_line(&contents[count-start_diff+1], count-start_diff+1, file_name);
+                print_line(&contents.str[count-start_diff+1], count-start_diff+1, file_name);
                 found++;
             }
         }
 
         count += patlen;
-        if (count > file_size) break;
+        if (count > contents.len) break;
 
         for (int i = 0; pattern[i]; ++i)
         {
-            if (contents[count] == pattern[i])
+            if (contents.str[count] == pattern[i])
             {
                 count -= i;
                 compare = true;
@@ -176,7 +151,7 @@ void search_file(char *file_name)
         printf("%ld\n", found);
     }
 
-    free(contents);
+    free(contents.str);
 }
 
 int main(int argc, char **argv)
@@ -187,7 +162,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    StrArray files = stra_init();
+    StrArray files = stra_init(50);
 
     bool patt_assigned = false;
 
