@@ -8,7 +8,7 @@
 #include <curses.h>
 
 #define STRA_IMPLEMENTATION
-#include "StrArray.h"
+#include <StrArray.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 
     init_pair(1, COLOR_BLACK, COLOR_WHITE);
 
-    files = stra_init();
+    files = stra_init(50);
 
     while (!quit)
     {

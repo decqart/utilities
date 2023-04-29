@@ -1,6 +1,6 @@
 CC=cc
 
-CFLAGS=-g -Wall -std=c99 -pedantic -O3 -D_DEFAULT_SOURCE
+CFLAGS=-g -Wall -std=c99 -pedantic -Iinclude -O3 -D_DEFAULT_SOURCE
 LDFLAGS=-lcurses
 
 O=bin
