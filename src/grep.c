@@ -105,38 +105,39 @@ void parse_opts(char *opts)
 
 void search_file(char *file_name)
 {
-    Str contents = read_file(file_name);
-    if (contents.str == NULL) return;
+    size_t cont_len = 0;
+    char *contents = read_file(file_name, &cont_len);
+    if (contents == NULL) return;
 
     bool compare = false;
 
     size_t found = 0;
 
     size_t count = 0;
-    while (contents.str[count])
+    while (contents[count])
     {
         if (compare)
         {
             compare = false;
-            if (!strncmp(&contents.str[count], pattern, patlen))
+            if (!strncmp(&contents[count], pattern, patlen))
             {
                 int start_diff = 0;
-                while (contents.str[count-start_diff] != '\n' &&
+                while (contents[count-start_diff] != '\n' &&
                        (count-start_diff+1 != 0))
                 {
                     start_diff += 1;
                 }
-                print_line(&contents.str[count-start_diff+1], count-start_diff+1, file_name);
+                print_line(&contents[count-start_diff+1], count-start_diff+1, file_name);
                 found++;
             }
         }
 
         count += patlen;
-        if (count > contents.len) break;
+        if (count > cont_len) break;
 
         for (int i = 0; pattern[i]; ++i)
         {
-            if (contents.str[count] == pattern[i])
+            if (contents[count] == pattern[i])
             {
                 count -= i;
                 compare = true;
@@ -151,7 +152,7 @@ void search_file(char *file_name)
         printf("%ld\n", found);
     }
 
-    free(contents.str);
+    free(contents);
 }
 
 int main(int argc, char **argv)

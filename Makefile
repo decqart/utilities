@@ -12,7 +12,6 @@ default:	\
 	clear	\
 	snake	\
 	fm		\
-	bed		\
 	grep	\
 	whoami	\
 	yes
@@ -30,10 +29,6 @@ snake: $(S)/snake.c
 fm: $(S)/fm.c
 	$(CC) $(CFLAGS) $< \
 	-o $(O)/fm $(LDFLAGS)
-
-bed: $(S)/bed.c
-	$(CC) $(CFLAGS) $< \
-	-o $(O)/bed $(LDFLAGS)
 
 grep: $(S)/grep.c
 	$(CC) $(CFLAGS) $< \

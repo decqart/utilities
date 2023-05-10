@@ -45,11 +45,11 @@ int main(int argc, char **argv)
             }
         }
 
-        Str buffer = read_file(argv[i]);
-        if (buffer.str != NULL)
+        char *buffer = read_file(argv[i], NULL);
+        if (buffer != NULL)
         {
-            fputs(buffer.str, stdout);
-            free(buffer.str);
+            fputs(buffer, stdout);
+            free(buffer);
         }
     }
 

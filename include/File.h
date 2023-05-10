@@ -1,24 +1,29 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include <Str.h>
+#include <stddef.h>
 
-Str read_file(const char *file_path);
-void write_file(const char *file_name, Str buffer);
+char *read_file(const char *file_path, size_t *file_size);
+void write_file(const char *file_name, char *buffer, size_t size);
 
 #endif /* FILE_H */
 
 #ifdef FILE_IMPLEMENTATION
 
-Str read_file(const char *file_path)
+#include <stdio.h>
+#include <stdlib.h>
+
+char *read_file(const char *file_path, size_t *file_size)
 {
     FILE *file = fopen(file_path, "r");
-    if (file == NULL) return NULLSTR;
+    if (file == NULL) return NULL;
 
     fseek(file, 0, SEEK_END);
 
     long size = ftell(file);
     if (size < 0) goto error;
+    if (file_size != NULL)
+        *file_size = size;
 
     char *buffer = malloc(size+1);
     if (buffer == NULL) goto error;
@@ -30,16 +35,16 @@ Str read_file(const char *file_path)
     buffer[size] = '\0';
 
     fclose(file);
-    return (Str) { buffer, size };
+    return buffer;
 error:
     fclose(file);
-    return NULLSTR;
+    return NULL;
 }
 
-void write_file(const char *file_name, Str buffer)
+void write_file(const char *file_name, char *buffer, size_t size)
 {
     FILE *file = fopen(file_name, "w");
-    fwrite(buffer.str, 1, buffer.len, file);
+    fwrite(buffer, 1, size, file);
     fclose(file);
 }
 
