@@ -31,7 +31,9 @@ void apple(void)
         apple_y = rand() % (max_y-1);
         change_apple = false;
     }
+    attron(COLOR_PAIR(2));
     mvaddch(apple_y, apple_x, 'A');
+    attroff(COLOR_PAIR(2));
 }
 
 int snake_y = 2;
@@ -48,6 +50,7 @@ void render_stuff(void)
     if (body_size-1 < pos_count)
         pos_count = 0;
 
+    attron(COLOR_PAIR(1));
     mvaddch(snake_y, snake_x, 'O');
 
     for (int i = 0; i < body_size; ++i)
@@ -58,6 +61,7 @@ void render_stuff(void)
             snake_y == body_pos[i].y)
             quit = true;
     }
+    attroff(COLOR_PAIR(1));
     mvprintw(0, 0, "Score: %d", score);
 }
 
@@ -88,6 +92,9 @@ void snake(void)
         break;
     case 'q':
         quit = true;
+        break;
+    case KEY_RESIZE:
+        getmaxyx(stdscr, max_y, max_x);
         break;
     default:
         break;
@@ -123,6 +130,11 @@ int main(void)
     noecho();
     nodelay(stdscr, 1);
     getmaxyx(stdscr, max_y, max_x);
+
+    start_color();
+
+    init_pair(1, COLOR_GREEN, COLOR_GREEN);
+    init_pair(2, COLOR_RED, COLOR_RED);
 
     while (!quit)
     {
