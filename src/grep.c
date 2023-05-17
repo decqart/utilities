@@ -41,7 +41,7 @@ bool show_line_num = false;
 bool show_file_name = false;
 bool recursive_search = false;
 
-void print_line(char *line, size_t pos, char *file_name)
+void print_line(char *line, size_t pos, const char *file_name)
 {
     if (!show_line) return;
     static char *prev_line = "";
@@ -81,7 +81,7 @@ void print_line(char *line, size_t pos, char *file_name)
     puts(prev_line);
 }
 
-void parse_opts(char *opts)
+void parse_opts(const char *opts)
 {
     while (*opts)
     {
@@ -103,7 +103,7 @@ void parse_opts(char *opts)
     }
 }
 
-void search_file(char *file_name)
+void search_file(const char *file_name)
 {
     size_t cont_len = 0;
     char *contents = read_file(file_name, &cont_len);
@@ -125,7 +125,7 @@ void search_file(char *file_name)
                 while (contents[count-start_diff] != '\n' &&
                        (count-start_diff+1 != 0))
                 {
-                    start_diff += 1;
+                    start_diff++;
                 }
                 print_line(&contents[count-start_diff+1], count-start_diff+1, file_name);
                 found++;
