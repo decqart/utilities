@@ -143,6 +143,10 @@ void search_file(const char *file_name)
                 compare = true;
                 break;
             }
+
+            // checks for utf-8 continuation byte
+            while ((pattern[i] & 0xc0) == 0x80)
+                i++;
         }
     }
     if (show_count)
