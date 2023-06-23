@@ -31,21 +31,16 @@ fm: $(S)/fm.c
 	-o $(O)/fm $(LDFLAGS)
 
 grep: $(S)/grep.c
-	$(CC) $(CFLAGS) $< \
-	-o $(O)/grep
+	$(CC) $(CFLAGS) $< -o $(O)/grep
 
 whoami: $(S)/whoami.c
-	$(CC) $(CFLAGS) $< \
-	-o $(O)/whoami
+	$(CC) $(CFLAGS) $< -o $(O)/whoami
 
 yes: $(S)/yes.c
-	$(CC) $(CFLAGS) $< \
-	-o $(O)/yes
+	$(CC) $(CFLAGS) $< -o $(O)/yes
 
 clear: $(S)/clear.c
-	$(CC) $(CFLAGS) $< \
-	-o $(O)/clear
+	$(CC) $(CFLAGS) $< -o $(O)/clear
 
 cat: $(S)/cat.c
-	$(CC) $(CFLAGS) $< \
-	-o $(O)/cat
+	$(CC) $(CFLAGS) $< -o $(O)/cat

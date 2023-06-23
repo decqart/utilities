@@ -161,6 +161,7 @@ void search_file(const char *file_name)
 
 int main(int argc, char **argv)
 {
+    //TODO: read stdin when needed
     if (argc < 3)
     {
         puts("Usage: grep [OPTS] [PATTERN] [FILE]");

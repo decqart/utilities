@@ -1,56 +1,32 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#define FILE_IMPLEMENTATION
-#include <File.h>
-
-char *read_input(void)
+void read_and_write(FILE *file)
 {
-    char *buffer = malloc(256);
-    if (buffer == NULL) return NULL;
-    size_t size = 256;
-    size_t pos = 0;
+    char buffer[256];
 
-    while (!feof(stdin))
+    while (fgets(buffer, sizeof(buffer), file) != NULL)
     {
-        int ch = getchar();
-        if (ch == '\n') break;
-        buffer[pos++] = ch;
-        if (pos == size)
-        {
-            size <<= 1;
-            buffer = realloc(buffer, size);
-            if (buffer == NULL) return NULL;
-        }
+        fputs(buffer, stdout);
+        buffer[0] = '\0';
     }
-    buffer[pos] = '\0';
-    return buffer;
 }
 
 int main(int argc, char **argv)
 {
+    if (argc == 1)
+        read_and_write(stdin);
+
     for (int i = 1; i < argc; ++i)
     {
         if (!strcmp(argv[i], "-"))
         {
-            while (1)
-            {
-                char *buffer = read_input();
-                if (buffer != NULL)
-                {
-                    puts(buffer);
-                    free(buffer);
-                }
-            }
+            read_and_write(stdin);
+            break;
         }
 
-        char *buffer = read_file(argv[i], NULL);
-        if (buffer != NULL)
-        {
-            fputs(buffer, stdout);
-            free(buffer);
-        }
+        FILE *f = fopen(argv[i], "r");
+        read_and_write(f);
     }
 
     return 0;
