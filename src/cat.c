@@ -27,6 +27,7 @@ int main(int argc, char **argv)
 
         FILE *f = fopen(argv[i], "r");
         read_and_write(f);
+        fclose(f);
     }
 
     return 0;
