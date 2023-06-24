@@ -13,6 +13,7 @@ default:	\
 	snake	\
 	fm		\
 	grep	\
+	uname	\
 	whoami	\
 	yes
 
@@ -32,6 +33,9 @@ fm: $(S)/fm.c
 
 grep: $(S)/grep.c
 	$(CC) $(CFLAGS) $< -o $(O)/grep
+
+uname: $(S)/uname.c
+	$(CC) $(CFLAGS) $< -o $(O)/uname
 
 whoami: $(S)/whoami.c
 	$(CC) $(CFLAGS) $< -o $(O)/whoami
