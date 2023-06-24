@@ -5,6 +5,7 @@
 int main(int argc, char **argv)
 {
     char *str = "y";
+
     if (argc > 1)
     {
         size_t len = 0;
@@ -16,10 +17,11 @@ int main(int argc, char **argv)
         for (int i = 1; i < argc; ++i)
         {
             strcat(str, argv[i]);
-            strcat(str, " ");
+            str[strlen(str)] = ' ';
         }
         str[len-1] = '\0';
     }
     while (puts(str) != EOF);
+
     return 0;
 }
