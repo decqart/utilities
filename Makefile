@@ -10,6 +10,7 @@ default:	\
 	dirs	\
 	cat		\
 	clear	\
+	ls		\
 	snake	\
 	fm		\
 	grep	\
@@ -30,6 +31,9 @@ snake: $(S)/snake.c
 fm: $(S)/fm.c
 	$(CC) $(CFLAGS) $< \
 	-o $(O)/fm $(LDFLAGS)
+
+ls: $(S)/ls.c
+	$(CC) $(CFLAGS) $< -o $(O)/ls
 
 grep: $(S)/grep.c
 	$(CC) $(CFLAGS) $< -o $(O)/grep
