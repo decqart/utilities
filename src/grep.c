@@ -5,7 +5,7 @@
 #include <fts.h>
 
 #define STRA_IMPLEMENTATION
-#include <StrArray.h>
+#include <StringArray.h>
 
 char *read_file(const char *file_path, size_t *file_size)
 {
@@ -16,8 +16,7 @@ char *read_file(const char *file_path, size_t *file_size)
 
     long size = ftell(file);
     if (size < 0) goto error;
-    if (file_size != NULL)
-        *file_size = size;
+    *file_size = size;
 
     char *buffer = malloc(size+1);
     if (buffer == NULL) goto error;
@@ -35,7 +34,7 @@ error:
     return NULL;
 }
 
-void traverse_file_tree(StrArray *files)
+void traverse_file_tree(StringArray *files)
 {
     char *path[2] = { ".", NULL };
 
@@ -187,13 +186,13 @@ void search_file(const char *file_name)
 int main(int argc, char **argv)
 {
     //TODO: read stdin when needed
-    if (argc < 3)
+    if (argc < 2)
     {
         puts("Usage: grep [OPTS] [PATTERN] [FILE]");
         return 0;
     }
 
-    StrArray files = stra_init(50);
+    StringArray files = stra_init(50);
 
     bool patt_assigned = false;
 
@@ -213,19 +212,19 @@ int main(int argc, char **argv)
 
     patlen = strlen(pattern);
 
-    if (recursive_search && files.value[0] == NULL)
+    if (recursive_search && files.data[0] == NULL)
         traverse_file_tree(&files);
     else
     {
-        show_file_name = files.value[1] != NULL;
+        show_file_name = files.pos > 1;
         recursive_search = false;
     }
 
-    for (int i = 0; files.value[i] != NULL; ++i)
+    for (size_t i = 0; i < files.pos; ++i)
     {
-        search_file(files.value[i]);
+        search_file(files.data[i]);
         if (recursive_search)
-            free(files.value[i]-2);
+            free(files.data[i]-2);
     }
 
     stra_destroy(&files);

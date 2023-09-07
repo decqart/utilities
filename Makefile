@@ -44,6 +44,9 @@ uname: $(S)/uname.c
 whoami: $(S)/whoami.c
 	$(CC) $(CFLAGS) $< -o $(O)/whoami
 
+wc: $(S)/wc.c
+	$(CC) $(CFLAGS) $< -o $(O)/wc
+
 yes: $(S)/yes.c
 	$(CC) $(CFLAGS) $< -o $(O)/yes
 
