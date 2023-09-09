@@ -17,11 +17,10 @@ bool show_bytes = false;
 
 char *read_file(FILE *file, size_t *file_size)
 {
-    size_t size = 512, pos = 0;
-    char *data = malloc(512);
-    int ch = fgetc(file);
+    size_t size = 1024, pos = 0;
+    char *data = malloc(1024);
 
-    while (ch != EOF)
+    while (!feof(file))
     {
         if (pos == size-1)
         {
@@ -29,13 +28,11 @@ char *read_file(FILE *file, size_t *file_size)
             data = realloc(data, size);
         }
 
-        data[pos] = ch;
-        pos++;
-        ch = fgetc(file);
+        pos += fread(&data[pos], 1, size-1-pos, file);
     }
 
     if (file_size != NULL)
-        *file_size = pos-1;
+        *file_size = pos;
     data[pos] = '\0';
 
     return data;

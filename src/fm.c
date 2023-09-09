@@ -45,11 +45,11 @@ void fill_space(WINDOW *win, int y, int x, int size)
 
 void print_dirs(WINDOW *win, StringArray array)
 {
-    int width = getmaxx(win)-2;
+    size_t width = getmaxx(win)-2;
     int count = 1;
 
     //skipping first one as it is "." the directory itself
-    for (int i = 0; array.data[i] != NULL; ++i)
+    for (size_t i = 0; i < array.pos; ++i)
     {
         if (cursor.pos == i)
         {
