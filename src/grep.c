@@ -7,31 +7,39 @@
 #define STRA_IMPLEMENTATION
 #include <StringArray.h>
 
-char *read_file(const char *file_path, size_t *file_size)
+char *pattern = NULL;
+size_t patlen = 0;
+
+bool show_line = true;
+bool show_count = false;
+bool show_line_num = false;
+bool show_file_name = false;
+bool recursive_search = false;
+
+char *read_file(FILE *file, size_t *file_size)
 {
-    FILE *file = fopen(file_path, "r");
-    if (file == NULL) return NULL;
+    size_t size = 512, pos = 0;
+    char *data = malloc(512);
+    int ch = fgetc(file);
 
-    fseek(file, 0, SEEK_END);
+    while (ch != EOF)
+    {
+        if (pos == size-1)
+        {
+            size <<= 1;
+            data = realloc(data, size);
+        }
 
-    long size = ftell(file);
-    if (size < 0) goto error;
-    *file_size = size;
+        data[pos] = ch;
+        pos++;
+        ch = fgetc(file);
+    }
 
-    char *buffer = malloc(size+1);
-    if (buffer == NULL) goto error;
+    if (file_size != NULL)
+        *file_size = pos-1;
+    data[pos] = '\0';
 
-    fseek(file, 0, SEEK_SET);
-
-    fread(buffer, 1, size, file);
-
-    buffer[size] = '\0';
-
-    fclose(file);
-    return buffer;
-error:
-    fclose(file);
-    return NULL;
+    return data;
 }
 
 void traverse_file_tree(StringArray *files)
@@ -55,15 +63,6 @@ void traverse_file_tree(StringArray *files)
 
     fts_close(tree);
 }
-
-char *pattern = NULL;
-size_t patlen = 0;
-
-bool show_line = true;
-bool show_count = false;
-bool show_line_num = false;
-bool show_file_name = false;
-bool recursive_search = false;
 
 void print_line(char *line, size_t pos, const char *file_name)
 {
@@ -127,50 +126,48 @@ void parse_opts(const char *opts)
     }
 }
 
-void search_file(const char *file_name)
+void search_file(FILE *file, const char *file_name)
 {
-    size_t cont_len = 0;
-    char *contents = read_file(file_name, &cont_len);
-    if (contents == NULL) return;
+    size_t len = 0;
+    char *buffer = read_file(file, &len);
+    if (buffer == NULL) return;
 
     bool compare = false;
 
     size_t found = 0;
 
-    size_t count = 0;
-    while (contents[count])
+    size_t i = 0;
+    while (buffer[i])
     {
         if (compare)
         {
             compare = false;
-            if (!strncmp(&contents[count], pattern, patlen))
+            if (!strncmp(&buffer[i], pattern, patlen))
             {
                 int start_diff = 0;
-                while (contents[count-start_diff] != '\n' &&
-                       (count-start_diff+1 != 0))
-                {
+                while (buffer[i-start_diff] != '\n' && (i-start_diff+1 != 0))
                     start_diff++;
-                }
-                print_line(&contents[count-start_diff+1], count-start_diff+1, file_name);
+
+                print_line(&buffer[i-start_diff+1], i-start_diff+1, file_name);
                 found++;
             }
         }
 
-        count += patlen;
-        if (count > cont_len) break;
+        i += patlen;
+        if (i > len) break;
 
-        for (int i = 0; pattern[i]; ++i)
+        for (int j = 0; pattern[j]; ++j)
         {
-            if (contents[count] == pattern[i])
+            if (buffer[i] == pattern[j])
             {
-                count -= i;
+                i -= j;
                 compare = true;
                 break;
             }
 
             // checks for utf-8 continuation byte
-            while ((pattern[i] & 0xc0) == 0x80)
-                i++;
+            while ((pattern[j] & 0xc0) == 0x80)
+                j++;
         }
     }
     if (show_count)
@@ -180,12 +177,11 @@ void search_file(const char *file_name)
         printf("%ld\n", found);
     }
 
-    free(contents);
+    free(buffer);
 }
 
 int main(int argc, char **argv)
 {
-    //TODO: read stdin when needed
     if (argc < 2)
     {
         puts("Usage: grep [OPTS] [PATTERN] [FILE]");
@@ -220,9 +216,14 @@ int main(int argc, char **argv)
         recursive_search = false;
     }
 
+    if (files.pos == 0)
+        search_file(stdin, "");
+
     for (size_t i = 0; i < files.pos; ++i)
     {
-        search_file(files.data[i]);
+        FILE *f = fopen(files.data[i], "r");
+        search_file(f, files.data[i]);
+        fclose(f);
         if (recursive_search)
             free(files.data[i]-2);
     }

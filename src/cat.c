@@ -6,10 +6,7 @@ void read_and_write(FILE *file)
     char buffer[256];
 
     while (fgets(buffer, sizeof(buffer), file) != NULL)
-    {
         fputs(buffer, stdout);
-        buffer[0] = '\0';
-    }
 }
 
 int main(int argc, char **argv)

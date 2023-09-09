@@ -16,6 +16,7 @@ default:	\
 	grep	\
 	uname	\
 	whoami	\
+	wc		\
 	yes
 
 clean:

@@ -8,7 +8,7 @@
 #include <curses.h>
 
 #define STRA_IMPLEMENTATION
-#include <StrArray.h>
+#include <StringArray.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -26,7 +26,7 @@ int movement = 0;
 
 bool quit = false;
 
-StrArray files, preview;
+StringArray files, preview;
 char *selected/*file_name*/ = NULL;
 
 bool is_dir(char *path)
@@ -43,24 +43,24 @@ void fill_space(WINDOW *win, int y, int x, int size)
         mvwaddch(win, y, j, ' ');
 }
 
-void print_dirs(WINDOW *win, StrArray array)
+void print_dirs(WINDOW *win, StringArray array)
 {
     int width = getmaxx(win)-2;
     int count = 1;
 
     //skipping first one as it is "." the directory itself
-    for (int i = 0; array.value[i] != NULL; ++i)
+    for (int i = 0; array.data[i] != NULL; ++i)
     {
         if (cursor.pos == i)
         {
             wattron(win, COLOR_PAIR(1));
-            selected = array.value[i];
+            selected = array.data[i];
         }
         count++;
-        size_t len = strlen(array.value[i]);
+        size_t len = strlen(array.data[i]);
         len = MIN(width, len);
 
-        mvwaddstr(win, i-movement+1, 1, array.value[i]);
+        mvwaddstr(win, i-movement+1, 1, array.data[i]);
         fill_space(win, i-movement+1, len+1, width+1);
 
         if (cursor.pos == i)
