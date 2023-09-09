@@ -1,7 +1,8 @@
 CC=cc
+LD=gold
 
-CFLAGS=-g -Wall -std=c99 -pedantic -Iinclude -O3 -D_DEFAULT_SOURCE
-LDFLAGS=-lcurses
+CFLAGS=-g -Wall -Wextra -std=c99 -pedantic -Iinclude -O3 -D_DEFAULT_SOURCE
+LDFLAGS=-fuse-ld=$(LD)
 
 O=bin
 S=src
@@ -26,33 +27,31 @@ dirs:
 	@mkdir -p $(O)
 
 snake: $(S)/snake.c
-	$(CC) $(CFLAGS) $< \
-	-o $(O)/snake $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $(O)/snake $(LDFLAGS) -lcurses
 
 fm: $(S)/fm.c
-	$(CC) $(CFLAGS) $< \
-	-o $(O)/fm $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -o $(O)/fm $(LDFLAGS) -lcurses
 
 ls: $(S)/ls.c
-	$(CC) $(CFLAGS) $< -o $(O)/ls
+	$(CC) $(CFLAGS) $< -o $(O)/ls $(LDFLAGS)
 
 grep: $(S)/grep.c
-	$(CC) $(CFLAGS) $< -o $(O)/grep
+	$(CC) $(CFLAGS) $< -o $(O)/grep $(LDFLAGS)
 
 uname: $(S)/uname.c
-	$(CC) $(CFLAGS) $< -o $(O)/uname
+	$(CC) $(CFLAGS) $< -o $(O)/uname $(LDFLAGS)
 
 whoami: $(S)/whoami.c
-	$(CC) $(CFLAGS) $< -o $(O)/whoami
+	$(CC) $(CFLAGS) $< -o $(O)/whoami $(LDFLAGS)
 
 wc: $(S)/wc.c
-	$(CC) $(CFLAGS) $< -o $(O)/wc
+	$(CC) $(CFLAGS) $< -o $(O)/wc $(LDFLAGS)
 
 yes: $(S)/yes.c
-	$(CC) $(CFLAGS) $< -o $(O)/yes
+	$(CC) $(CFLAGS) $< -o $(O)/yes $(LDFLAGS)
 
 clear: $(S)/clear.c
-	$(CC) $(CFLAGS) $< -o $(O)/clear
+	$(CC) $(CFLAGS) $< -o $(O)/clear $(LDFLAGS)
 
 cat: $(S)/cat.c
-	$(CC) $(CFLAGS) $< -o $(O)/cat
+	$(CC) $(CFLAGS) $< -o $(O)/cat $(LDFLAGS)
