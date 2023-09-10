@@ -191,16 +191,16 @@ int main(int argc, char **argv)
 
     for (int i = 1; i < argc; ++i)
     {
-        if (argv[i][0] == '-')
+        if (argv[i][0] == '-' && argv[i][1] != '\0')
             parse_opts(argv[i]);
+        else if (patt_assigned)
+            stra_append(&files, argv[i]);
         if (argv[i][0] != '-' && !patt_assigned)
         {
             pattern = argv[i];
             patt_assigned = true;
             continue;
         }
-        if (argv[i][0] != '-' && patt_assigned)
-            stra_append(&files, argv[i]);
     }
 
     patlen = strlen(pattern);
@@ -218,6 +218,12 @@ int main(int argc, char **argv)
 
     for (size_t i = 0; i < files.pos; ++i)
     {
+        if (!strcmp(files.data[i], "-"))
+        {
+            search_file(stdin, "(standard input)");
+            continue;
+        }
+
         FILE *f = fopen(files.data[i], "r");
         if (f == NULL)
         {
