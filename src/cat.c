@@ -19,7 +19,7 @@ int main(int argc, char **argv)
         if (!strcmp(argv[i], "-"))
         {
             read_and_write(stdin);
-            break;
+            continue;
         }
 
         FILE *f = fopen(argv[i], "r");

@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
 
 #define STRA_IMPLEMENTATION
 #include <StringArray.h>
@@ -75,9 +78,15 @@ void process_file(FILE *file, const char *file_name)
     size_t word_count = 0;
     size_t char_count = 0;
 
+    bool whitespace = true;
+
     size_t i = 0;
     while (buffer[i])
     {
+        if (isspace(buffer[i]) && !whitespace)
+            word_count++;
+        whitespace = isspace(buffer[i]);
+
         if (buffer[i] == '\n')
             line_count++;
 
@@ -86,7 +95,8 @@ void process_file(FILE *file, const char *file_name)
         i++;
     }
 
-    if (show_all) putchar(' ');
+    if (show_all || (show_lines && (show_words || show_chars || show_bytes)))
+        putchar(' ');
     if (show_all || show_lines)
         printf("%ld ", line_count);
 
@@ -101,6 +111,11 @@ void process_file(FILE *file, const char *file_name)
 
     puts(file_name);
 
+    total_line += line_count;
+    total_word += word_count;
+    total_byte += i;
+    total_char += char_count;
+
     free(buffer);
 }
 
@@ -110,7 +125,7 @@ int main(int argc, char **argv)
 
     for (int i = 1; i < argc; ++i)
     {
-        if (argv[i][0] == '-')
+        if (argv[i][0] == '-' && argv[i][1] != '\0')
             parse_opts(argv[i]);
         else
             stra_append(&files, argv[i]);
@@ -121,9 +136,39 @@ int main(int argc, char **argv)
 
     for (size_t i = 0; i < files.pos; ++i)
     {
+        if (!strcmp(files.data[i], "-"))
+        {
+            process_file(stdin, files.data[i]);
+            continue;
+        }
+
         FILE *f = fopen(files.data[i], "r");
+        if (f == NULL)
+        {
+            fprintf(stderr, "wc: '%s' is not a valid file or directory\n", files.data[i]);
+            continue;
+        }
         process_file(f, files.data[i]);
         fclose(f);
+    }
+
+    if (files.pos > 1)
+    {
+        if (show_all || (show_lines && (show_words || show_chars || show_bytes)))
+            putchar(' ');
+        if (show_all || show_lines)
+            printf("%ld ", total_line);
+
+        if (show_all || show_words)
+            printf("%ld ", total_word);
+
+        if (show_chars)
+            printf("%ld ", total_char);
+
+        if (show_all || show_bytes)
+            printf("%ld ", total_byte);
+
+        puts("total");
     }
 
     stra_destroy(&files);

@@ -219,6 +219,11 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < files.pos; ++i)
     {
         FILE *f = fopen(files.data[i], "r");
+        if (f == NULL)
+        {
+            fprintf(stderr, "grep: '%s' is not a valid file or directory\n", files.data[i]);
+            continue;
+        }
         search_file(f, files.data[i]);
         fclose(f);
         if (recursive_search)
