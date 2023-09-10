@@ -1,21 +1,21 @@
-#!/bin/bash
+#!/bin/sh
 
 STR="haha\n haha"
 
-print_seperator() {
-    for i in `seq 1 $COLUMNS`; do
-        printf -
-    done
-}
+CMP1=$(echo $STR |       cat - test.txt)
+CMP2=$(echo $STR | ./bin/cat - test.txt)
 
-#testing cat
-echo $STR | cat - test.txt
-print_seperator
-echo $STR | ./bin/cat - test.txt
+if [ "$CMP1" = "$CMP2" ]; then
+    echo "Test Passed"
+else
+    echo "Test Failed"
+fi
 
-print_seperator
+CMP1=$(echo $STR |       wc -lcm test.txt - Makefile)
+CMP2=$(echo $STR | ./bin/wc -lcm test.txt - Makefile)
 
-#testing wc
-echo $STR | wc -lcm test.txt - Makefile
-print_seperator
-echo $STR | ./bin/wc -lcm test.txt - Makefile
+if [ "$CMP1" = "$CMP2" ]; then
+    echo "Test Passed"
+else
+    echo "Test Failed"
+fi
