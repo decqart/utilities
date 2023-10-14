@@ -5,7 +5,15 @@
 int main(int argc, char **argv)
 {
     if (argv[1] != NULL)
-        chdir(argv[1]);
+    {
+        if (chdir(argv[1]) == -1)
+        {
+            printf("ls: cant access '%s'\n", argv[1]);
+            return 1;
+        }
+    }
+
+    int piped = !isatty(STDOUT_FILENO);
 
     DIR *dir = opendir(".");
 
@@ -16,7 +24,11 @@ int main(int argc, char **argv)
         if (ent->d_name[0] != '.')
         {
             fputs(ent->d_name, stdout);
-            fputs("  ", stdout);
+
+            if (piped)
+                fputc('\n', stdout);
+            else
+                fputs("  ", stdout);
         }
 
         ent = readdir(dir);
@@ -24,7 +36,8 @@ int main(int argc, char **argv)
 
     closedir(dir);
 
-    putchar('\n');
+    if (!piped)
+        putchar('\n');
 
     return 0;
 }
