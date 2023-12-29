@@ -4,8 +4,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#define STRA_IMPLEMENTATION
-#include <StringArray.h>
+#include <DyArray.h>
+
+typedef DyArray(char *) StringArray;
 
 size_t total_line = 0;
 size_t total_word = 0;
@@ -121,20 +122,20 @@ void process_file(FILE *file, const char *file_name)
 
 int main(int argc, char **argv)
 {
-    StringArray files = stra_init(50);
+    StringArray files = da_init(char *, 50);
 
     for (int i = 1; i < argc; ++i)
     {
         if (argv[i][0] == '-' && argv[i][1] != '\0')
             parse_opts(argv[i]);
         else
-            stra_append(&files, argv[i]);
+            da_append(char *, files, argv[i]);
     }
 
-    if (files.pos == 0)
+    if (files.size == 0)
         process_file(stdin, "");
 
-    for (size_t i = 0; i < files.pos; ++i)
+    for (size_t i = 0; i < files.size; ++i)
     {
         if (!strcmp(files.data[i], "-"))
         {
@@ -152,7 +153,7 @@ int main(int argc, char **argv)
         fclose(f);
     }
 
-    if (files.pos > 1)
+    if (files.size > 1)
     {
         if (show_all || (show_lines && (show_words || show_chars || show_bytes)))
             putchar(' ');
@@ -171,6 +172,6 @@ int main(int argc, char **argv)
         puts("total");
     }
 
-    stra_destroy(&files);
+    da_destroy(files);
     return 0;
 }
