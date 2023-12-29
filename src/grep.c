@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 #include <fts.h>
 
-#define STRA_IMPLEMENTATION
-#include <StringArray.h>
+#include <DyArray.h>
+
+typedef DyArray(char *) StringArray;
 
 char *pattern = NULL;
 size_t patlen = 0;
@@ -53,7 +54,7 @@ void traverse_file_tree(StringArray *files)
         if (node->fts_info & FTS_F)
         {
             char *file = strdup(node->fts_path);
-            stra_append(files, &file[2]);
+            da_append(char *, (*files), &file[2]);
         }
         node = fts_read(tree);
     }
@@ -181,11 +182,11 @@ int main(int argc, char **argv)
 {
     if (argc < 2)
     {
-        puts("Usage: grep [OPTS] [PATTERN] [FILE]");
+        fprintf(stderr, "Usage: grep [OPTS] [PATTERN] [FILE]\n");
         return 0;
     }
 
-    StringArray files = stra_init(50);
+    StringArray files = da_init(char *, 50);
 
     bool patt_assigned = false;
 
@@ -194,7 +195,7 @@ int main(int argc, char **argv)
         if (argv[i][0] == '-' && argv[i][1] != '\0')
             parse_opts(argv[i]);
         else if (patt_assigned)
-            stra_append(&files, argv[i]);
+            da_append(char *, files, argv[i]);
         if (argv[i][0] != '-' && !patt_assigned)
         {
             pattern = argv[i];
@@ -209,14 +210,14 @@ int main(int argc, char **argv)
         traverse_file_tree(&files);
     else
     {
-        show_file_name = files.pos > 1;
+        show_file_name = files.size > 1;
         recursive_search = false;
     }
 
-    if (files.pos == 0)
+    if (files.size == 0)
         search_file(stdin, "");
 
-    for (size_t i = 0; i < files.pos; ++i)
+    for (size_t i = 0; i < files.size; ++i)
     {
         if (!strcmp(files.data[i], "-"))
         {
@@ -236,6 +237,6 @@ int main(int argc, char **argv)
             free(files.data[i]-2);
     }
 
-    stra_destroy(&files);
+    da_destroy(files);
     return 0;
 }

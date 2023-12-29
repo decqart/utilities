@@ -7,19 +7,20 @@
 #include <dirent.h>
 #include <curses.h>
 
-#define STRA_IMPLEMENTATION
-#include <StringArray.h>
+#include <DyArray.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-WINDOW *left, *right;
-
-int max_x, max_y;
+typedef DyArray(char *) StringArray;
 
 typedef struct {
     int pos;
     int end;
 } Pos;
+
+WINDOW *left, *right;
+
+int max_x, max_y;
 
 Pos cursor;
 int movement = 0;
@@ -37,30 +38,47 @@ bool is_dir(char *path)
     return S_ISDIR(statbuf.st_mode);
 }
 
+void stra_sort(StringArray *array)
+{
+    char *tmp = NULL;
+    for (size_t i = 0; i < array->size; i++)
+    {
+        for (size_t j = 0; j < array->size; j++)
+        {
+            if (strcmp(array->data[i], array->data[j]) < 0)
+            {
+                tmp = array->data[i];
+                array->data[i] = array->data[j];
+                array->data[j] = tmp;
+            }
+        }
+    }
+}
+
 void fill_space(WINDOW *win, int y, int x, int size)
 {
     for (int j = x; j < size; ++j)
         mvwaddch(win, y, j, ' ');
 }
 
-void print_dirs(WINDOW *win, StringArray array)
+void print_dirs(WINDOW *win, const StringArray *array)
 {
     size_t width = getmaxx(win)-2;
     int count = 1;
 
     //skipping first one as it is "." the directory itself
-    for (size_t i = 0; i < array.pos; ++i)
+    for (size_t i = 0; i < array->size; ++i)
     {
         if (cursor.pos == i)
         {
             wattron(win, COLOR_PAIR(1));
-            selected = array.data[i];
+            selected = array->data[i];
         }
         count++;
-        size_t len = strlen(array.data[i]);
+        size_t len = strlen(array->data[i]);
         len = MIN(width, len);
 
-        mvwaddstr(win, i-movement+1, 1, array.data[i]);
+        mvwaddstr(win, i-movement+1, 1, array->data[i]);
         fill_space(win, i-movement+1, len+1, width+1);
 
         if (cursor.pos == i)
@@ -96,12 +114,12 @@ void read_dir(const char *dir_path, WINDOW *win)
 
     while (ent != NULL)
     {
-        stra_append(&files, ent->d_name);
+        da_append(char *, files, ent->d_name);
         ent = readdir(dir);
     }
     stra_sort(&files);
-    print_dirs(win, files);
-    stra_empty(&files);
+    print_dirs(win, &files);
+    files.size = 0;
     closedir(dir);
 }
 
@@ -157,7 +175,7 @@ int main(int argc, char **argv)
 {
     if (argc > 2)
     {
-        puts("usage: fm [dir]");
+        fprintf(stderr, "Usage: fm [dir]\n");
         return 1;
     }
 
@@ -171,7 +189,7 @@ int main(int argc, char **argv)
 
     init_pair(1, COLOR_BLACK, COLOR_WHITE);
 
-    files = stra_init(50);
+    da_passed_init(char *, files, 50);
 
     while (!quit)
     {
@@ -181,7 +199,7 @@ int main(int argc, char **argv)
         delete_windows();
     }
 
-    stra_destroy(&files);
+    da_destroy(files);
     endwin();
     return 0;
 }
