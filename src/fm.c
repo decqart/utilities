@@ -7,11 +7,9 @@
 #include <dirent.h>
 #include <curses.h>
 
-#include <DyArray.h>
+#include <StringArray.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-
-typedef DyArray(char *) StringArray;
 
 typedef struct {
     int pos;
@@ -30,29 +28,12 @@ bool quit = false;
 StringArray files, preview;
 char *selected/*file_name*/ = NULL;
 
-bool is_dir(char *path)
+bool is_dir(const char *path)
 {
     struct stat statbuf;
     if (stat(path, &statbuf))
         return false;
     return S_ISDIR(statbuf.st_mode);
-}
-
-void stra_sort(StringArray *array)
-{
-    char *tmp = NULL;
-    for (size_t i = 0; i < array->size; i++)
-    {
-        for (size_t j = 0; j < array->size; j++)
-        {
-            if (strcmp(array->data[i], array->data[j]) < 0)
-            {
-                tmp = array->data[i];
-                array->data[i] = array->data[j];
-                array->data[j] = tmp;
-            }
-        }
-    }
 }
 
 void fill_space(WINDOW *win, int y, int x, int size)
@@ -114,7 +95,7 @@ void read_dir(const char *dir_path, WINDOW *win)
 
     while (ent != NULL)
     {
-        da_append(char *, files, ent->d_name);
+        stra_append(&files, ent->d_name);
         ent = readdir(dir);
     }
     stra_sort(&files);
@@ -189,7 +170,7 @@ int main(int argc, char **argv)
 
     init_pair(1, COLOR_BLACK, COLOR_WHITE);
 
-    da_passed_init(char *, files, 50);
+    files = stra_init(50);
 
     while (!quit)
     {
@@ -199,7 +180,7 @@ int main(int argc, char **argv)
         delete_windows();
     }
 
-    da_destroy(files);
+    stra_destroy(&files);
     endwin();
     return 0;
 }
