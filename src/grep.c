@@ -4,9 +4,7 @@
 #include <string.h>
 #include <fts.h>
 
-#include <DyArray.h>
-
-typedef DyArray(char *) StringArray;
+#include <StringArray.h>
 
 char *pattern = NULL;
 size_t patlen = 0;
@@ -54,7 +52,7 @@ void traverse_file_tree(StringArray *files)
         if (node->fts_info & FTS_F)
         {
             char *file = strdup(node->fts_path);
-            da_append(char *, (*files), &file[2]);
+            stra_append(files, &file[2]);
         }
         node = fts_read(tree);
     }
@@ -62,7 +60,7 @@ void traverse_file_tree(StringArray *files)
     fts_close(tree);
 }
 
-void print_line(char *line, size_t pos, const char *file_name)
+void print_line(const char *line, size_t pos, const char *file_name)
 {
     if (!show_line) return;
     static char *prev_line = "";
@@ -87,7 +85,7 @@ void print_line(char *line, size_t pos, const char *file_name)
             if (*(line-pos) == '\n')
                 nl_count++;
         }
-        printf("%ld:", nl_count);
+        printf("%lu:", nl_count);
     }
 
     if (old_size < size)
@@ -168,11 +166,12 @@ void search_file(FILE *file, const char *file_name)
                 j++;
         }
     }
+
     if (show_count)
     {
         if (show_file_name)
             printf("%s:", file_name);
-        printf("%ld\n", found);
+        printf("%lu\n", found);
     }
 
     free(buffer);
@@ -186,7 +185,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    StringArray files = da_init(char *, 50);
+    StringArray files = stra_init(50);
 
     bool patt_assigned = false;
 
@@ -195,7 +194,8 @@ int main(int argc, char **argv)
         if (argv[i][0] == '-' && argv[i][1] != '\0')
             parse_opts(argv[i]);
         else if (patt_assigned)
-            da_append(char *, files, argv[i]);
+            stra_append(&files, argv[i]);
+
         if (argv[i][0] != '-' && !patt_assigned)
         {
             pattern = argv[i];
@@ -231,12 +231,13 @@ int main(int argc, char **argv)
             fprintf(stderr, "grep: '%s' is not a valid file or directory\n", files.data[i]);
             continue;
         }
+
         search_file(f, files.data[i]);
         fclose(f);
         if (recursive_search)
             free(files.data[i]-2);
     }
 
-    da_destroy(files);
+    stra_destroy(&files);
     return 0;
 }

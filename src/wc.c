@@ -4,9 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <DyArray.h>
-
-typedef DyArray(char *) StringArray;
+#include <StringArray.h>
 
 size_t total_line = 0;
 size_t total_word = 0;
@@ -99,16 +97,16 @@ void process_file(FILE *file, const char *file_name)
     if (show_all || (show_lines && (show_words || show_chars || show_bytes)))
         putchar(' ');
     if (show_all || show_lines)
-        printf("%ld ", line_count);
+        printf("%lu ", line_count);
 
     if (show_all || show_words)
-        printf("%ld ", word_count);
+        printf("%lu ", word_count);
 
     if (show_chars)
-        printf("%ld ", char_count);
+        printf("%lu ", char_count);
 
     if (show_all || show_bytes)
-        printf("%ld ", i);
+        printf("%lu ", i);
 
     puts(file_name);
 
@@ -122,14 +120,14 @@ void process_file(FILE *file, const char *file_name)
 
 int main(int argc, char **argv)
 {
-    StringArray files = da_init(char *, 50);
+    StringArray files = stra_init(50);
 
     for (int i = 1; i < argc; ++i)
     {
         if (argv[i][0] == '-' && argv[i][1] != '\0')
             parse_opts(argv[i]);
         else
-            da_append(char *, files, argv[i]);
+            stra_append(&files, argv[i]);
     }
 
     if (files.size == 0)
@@ -158,20 +156,20 @@ int main(int argc, char **argv)
         if (show_all || (show_lines && (show_words || show_chars || show_bytes)))
             putchar(' ');
         if (show_all || show_lines)
-            printf("%ld ", total_line);
+            printf("%lu ", total_line);
 
         if (show_all || show_words)
-            printf("%ld ", total_word);
+            printf("%lu ", total_word);
 
         if (show_chars)
-            printf("%ld ", total_char);
+            printf("%lu ", total_char);
 
         if (show_all || show_bytes)
-            printf("%ld ", total_byte);
+            printf("%lu ", total_byte);
 
         puts("total");
     }
 
-    da_destroy(files);
+    stra_destroy(&files);
     return 0;
 }
