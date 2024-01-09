@@ -15,25 +15,23 @@ bool show_line_num = false;
 bool show_file_name = false;
 bool recursive_search = false;
 
-char *read_file(FILE *file, size_t *file_size)
+void *read_file(FILE *file, size_t *file_size)
 {
-    size_t size = 1024, pos = 0;
+    size_t alloced = 1024, size = 0;
     char *data = malloc(1024);
 
     while (!feof(file))
     {
-        if (pos == size-1)
+        if (size == alloced)
         {
-            size <<= 1;
-            data = realloc(data, size);
+            alloced <<= 1;
+            data = realloc(data, alloced);
         }
 
-        pos += fread(&data[pos], 1, size-1-pos, file);
+        size += fread(&data[size], 1, alloced-size, file);
     }
 
-    if (file_size != NULL)
-        *file_size = pos;
-    data[pos] = '\0';
+    *file_size = size;
 
     return data;
 }
@@ -63,16 +61,10 @@ void traverse_file_tree(StringArray *files)
 void print_line(const char *line, size_t pos, const char *file_name)
 {
     if (!show_line) return;
-    static char *prev_line = "";
-    static char *old_file_name = "";
-    static size_t old_size = 0;
+
     size_t size = 0;
     while (line[size] != '\n')
         size++;
-
-    if (!strcmp(old_file_name, file_name) &&
-        !strncmp(prev_line, line, size))
-        return;
 
     if (show_file_name)
         printf("%s:", file_name);
@@ -88,16 +80,8 @@ void print_line(const char *line, size_t pos, const char *file_name)
         printf("%lu:", nl_count);
     }
 
-    if (old_size < size)
-    {
-        if (prev_line[0] != '\0')
-            free(prev_line);
-        prev_line = malloc(size+1);
-    }
-    old_size = size;
-    strncpy(prev_line, line, size);
-    prev_line[size] = '\0';
-    puts(prev_line);
+    fwrite(line, 1, size, stdout);
+    putchar('\n');
 }
 
 void parse_opts(const char *opts)
@@ -128,36 +112,30 @@ void search_file(FILE *file, const char *file_name)
     char *buffer = read_file(file, &len);
     if (buffer == NULL) return;
 
-    bool compare = false;
-
     size_t found = 0;
 
     size_t i = 0;
-    while (buffer[i])
+    while (buffer[i] && i < len)
     {
-        if (compare)
-        {
-            compare = false;
-            if (!strncmp(&buffer[i], pattern, patlen))
-            {
-                int start_diff = 0;
-                while (buffer[i-start_diff] != '\n' && (i-start_diff+1 != 0))
-                    start_diff++;
-
-                print_line(&buffer[i-start_diff+1], i-start_diff+1, file_name);
-                found++;
-            }
-        }
-
-        i += patlen;
-        if (i > len) break;
-
-        for (int j = 0; pattern[j]; ++j)
+        for (size_t j = 0; pattern[j]; ++j)
         {
             if (buffer[i] == pattern[j])
             {
                 i -= j;
-                compare = true;
+
+                if (!strncmp(&buffer[i], pattern, patlen))
+                {
+                    size_t start_diff = 0;
+                    while (buffer[i-start_diff] != '\n' && (i-start_diff+1 != 0))
+                        start_diff++;
+
+                    print_line(&buffer[i-start_diff+1], i-start_diff+1, file_name);
+                    found++;
+
+                    while (buffer[i] && buffer[i] != '\n')
+                        i++;
+                }
+
                 break;
             }
 
@@ -165,6 +143,8 @@ void search_file(FILE *file, const char *file_name)
             while ((pattern[j] & 0xc0) == 0x80)
                 j++;
         }
+
+        i += patlen;
     }
 
     if (show_count)
