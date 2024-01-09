@@ -125,11 +125,12 @@ void search_file(FILE *file, const char *file_name)
 
                 if (!strncmp(&buffer[i], pattern, patlen))
                 {
-                    size_t start_diff = 0;
-                    while (buffer[i-start_diff] != '\n' && (i-start_diff+1 != 0))
-                        start_diff++;
+                    size_t diff = 0;
+                    while (buffer[i-diff] != '\n' && (i-diff+1 != 0))
+                        diff++;
 
-                    print_line(&buffer[i-start_diff+1], i-start_diff+1, file_name);
+                    size_t start = i-diff+1;
+                    print_line(&buffer[start], start, file_name);
                     found++;
 
                     while (buffer[i] && buffer[i] != '\n')
@@ -140,8 +141,8 @@ void search_file(FILE *file, const char *file_name)
             }
 
             // checks for utf-8 continuation byte
-            while ((pattern[j] & 0xc0) == 0x80)
-                j++;
+            //while ((pattern[j] & 0xc0) == 0x80)
+            //    j++;
         }
 
         i += patlen;
