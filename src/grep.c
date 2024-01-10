@@ -83,6 +83,7 @@ void print_line(const char *buffer, size_t buffer_size, size_t start, const char
     if (show_file_name)
         printf("%s:", file_name);
 
+    //TODO: get the newline while searching the file
     if (show_line_num)
     {
         size_t nl_count = 1;
@@ -119,21 +120,19 @@ void search_file(FILE *file, const char *file_name)
     {
         for (size_t j = 0; pattern[j]; ++j)
         {
-            if (buffer[i] == pattern[j])
+            if (buffer[i] == pattern[j] &&
+                !strncmp(&buffer[i-j], pattern, patlen))
             {
-                if (!strncmp(&buffer[i-j], pattern, patlen))
-                {
-                    size_t diff = 0;
-                    while (buffer[i-diff] != '\n' && (i-diff+1 != 0))
-                        diff++;
+                size_t diff = 0;
+                while (buffer[i-diff] != '\n' && (i-diff+1 != 0))
+                    diff++;
 
-                    size_t start = i-diff+1;
-                    print_line(buffer, size, start, file_name);
-                    found++;
+                size_t start = i-diff+1;
+                print_line(buffer, size, start, file_name);
+                found++;
 
-                    while (buffer[i] != '\n' && i < size)
-                        i++;
-                }
+                while (buffer[i] != '\n' && i < size)
+                    i++;
 
                 break;
             }
