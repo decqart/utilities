@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <errno.h>
 #include <fts.h>
 
 #include <StringArray.h>
@@ -29,11 +30,24 @@ void *read_file(FILE *file, size_t *file_size)
         }
 
         size += fread(&data[size], 1, alloced-size, file);
+        if (ferror(file))
+            return NULL;
     }
 
     *file_size = size;
 
     return data;
+}
+
+bool is_binary_file(const char *buffer, size_t size)
+{
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (buffer[i] == '\0')
+            return true;
+    }
+
+    return false;
 }
 
 void traverse_file_tree(StringArray *files)
@@ -58,13 +72,13 @@ void traverse_file_tree(StringArray *files)
     fts_close(tree);
 }
 
-void print_line(const char *line, size_t pos, const char *file_name)
+void print_line(const char *buffer, size_t buffer_size, size_t start, const char *file_name)
 {
     if (!show_line) return;
 
-    size_t size = 0;
-    while (line[size] != '\n')
-        size++;
+    size_t len = 0;
+    while (buffer[start+len] != '\n' && start+len < buffer_size)
+        len++;
 
     if (show_file_name)
         printf("%s:", file_name);
@@ -72,16 +86,70 @@ void print_line(const char *line, size_t pos, const char *file_name)
     if (show_line_num)
     {
         size_t nl_count = 1;
-        while (pos--)
+        size_t i = start;
+
+        while (i--)
         {
-            if (*(line-pos) == '\n')
+            if (buffer[i] == '\n')
                 nl_count++;
         }
         printf("%lu:", nl_count);
     }
 
-    fwrite(line, 1, size, stdout);
+    fwrite(&buffer[start], 1, len, stdout);
     putchar('\n');
+}
+
+void search_file(FILE *file, const char *file_name)
+{
+    size_t size = 0;
+    char *buffer = read_file(file, &size);
+    if (buffer == NULL)
+    {
+        fprintf(stderr, "grep: %s: %s\n", file_name, strerror(errno));
+        exit(1);
+    }
+    else if (is_binary_file(buffer, size))
+        return;
+
+    size_t found = 0;
+
+    size_t i = 0;
+    while (i < size)
+    {
+        for (size_t j = 0; pattern[j]; ++j)
+        {
+            if (buffer[i] == pattern[j])
+            {
+                if (!strncmp(&buffer[i-j], pattern, patlen))
+                {
+                    size_t diff = 0;
+                    while (buffer[i-diff] != '\n' && (i-diff+1 != 0))
+                        diff++;
+
+                    size_t start = i-diff+1;
+                    print_line(buffer, size, start, file_name);
+                    found++;
+
+                    while (buffer[i] != '\n' && i < size)
+                        i++;
+                }
+
+                break;
+            }
+        }
+
+        i += patlen;
+    }
+
+    if (show_count)
+    {
+        if (show_file_name)
+            printf("%s:", file_name);
+        printf("%lu\n", found);
+    }
+
+    free(buffer);
 }
 
 void parse_opts(const char *opts)
@@ -106,66 +174,8 @@ void parse_opts(const char *opts)
     }
 }
 
-void search_file(FILE *file, const char *file_name)
-{
-    size_t len = 0;
-    char *buffer = read_file(file, &len);
-    if (buffer == NULL) return;
-
-    size_t found = 0;
-
-    size_t i = 0;
-    while (buffer[i] && i < len)
-    {
-        for (size_t j = 0; pattern[j]; ++j)
-        {
-            if (buffer[i] == pattern[j])
-            {
-                i -= j;
-
-                if (!strncmp(&buffer[i], pattern, patlen))
-                {
-                    size_t diff = 0;
-                    while (buffer[i-diff] != '\n' && (i-diff+1 != 0))
-                        diff++;
-
-                    size_t start = i-diff+1;
-                    print_line(&buffer[start], start, file_name);
-                    found++;
-
-                    while (buffer[i] && buffer[i] != '\n')
-                        i++;
-                }
-
-                break;
-            }
-
-            // checks for utf-8 continuation byte
-            //while ((pattern[j] & 0xc0) == 0x80)
-            //    j++;
-        }
-
-        i += patlen;
-    }
-
-    if (show_count)
-    {
-        if (show_file_name)
-            printf("%s:", file_name);
-        printf("%lu\n", found);
-    }
-
-    free(buffer);
-}
-
 int main(int argc, char **argv)
 {
-    if (argc < 2)
-    {
-        fprintf(stderr, "Usage: grep [OPTS] [PATTERN] [FILE]\n");
-        return 0;
-    }
-
     StringArray files = stra_init(50);
 
     bool patt_assigned = false;
@@ -180,14 +190,19 @@ int main(int argc, char **argv)
         if (argv[i][0] != '-' && !patt_assigned)
         {
             pattern = argv[i];
+            patlen = strlen(pattern);
             patt_assigned = true;
-            continue;
         }
     }
 
-    patlen = strlen(pattern);
+    if (argc < 2 || pattern == NULL)
+    {
+        fprintf(stderr, "Usage: grep [OPTIONS] [PATTERN] [FILES]\n");
+        stra_destroy(&files);
+        return 1;
+    }
 
-    if (recursive_search && files.data[0] == NULL)
+    if (recursive_search && files.size == 0)
         traverse_file_tree(&files);
     else
     {
