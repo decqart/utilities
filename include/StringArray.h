@@ -32,14 +32,13 @@ static inline void stra_append(StringArray *array, char *val)
 
 static inline void stra_sort(StringArray *array)
 {
-    char *tmp = NULL;
     for (size_t i = 0; i < array->size; ++i)
     {
         for (size_t j = 0; j < array->size; ++j)
         {
             if (strcmp(array->data[i], array->data[j]) < 0)
             {
-                tmp = array->data[i];
+                char *tmp = array->data[i];
                 array->data[i] = array->data[j];
                 array->data[j] = tmp;
             }
